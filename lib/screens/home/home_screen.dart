@@ -4,10 +4,14 @@ import 'package:rentease/providers/vehicle_provider.dart';
 import 'package:rentease/screens/home/dashboard_screen.dart';
 import 'package:rentease/screens/profile/profile_screen.dart';
 import 'package:rentease/screens/vehicle/vehicle_screen.dart';
+<<<<<<< Updated upstream
 import 'package:rentease/widgets/bottom_nav.dart';
 
 class HomeScreen extends StatefulWidget {
   static const routeName = '/home';
+=======
+import 'package:rentease/screens/payment/admin_payment_screen.dart';
+>>>>>>> Stashed changes
 
   const HomeScreen({super.key});
 
@@ -35,10 +39,27 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+<<<<<<< Updated upstream
       body: screens[selectedIndex],
       bottomNavigationBar: BottomNav(
         selectedIndex: selectedIndex,
         onTap: (index) => setState(() => selectedIndex = index),
+=======
+      appBar: AppBar(
+        title: const Text('RentEase'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.payment),
+            tooltip: 'Pembayaran Admin',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AdminPaymentScreen()),
+              );
+            },
+          ),
+        ],
+>>>>>>> Stashed changes
       ),
     );
   }
