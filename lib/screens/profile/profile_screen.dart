@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:rentease/providers/auth_provider.dart';
 import 'package:rentease/providers/profile_provider.dart';
 import 'package:rentease/screens/auth/login_screen.dart';
+import 'package:rentease/screens/payment/admin_payment_screen.dart';
 import 'package:rentease/utils/app_colors.dart';
 import 'package:rentease/widgets/primary_button.dart';
 
@@ -62,6 +63,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _ProfileText(text: profile?.phoneNumber.isNotEmpty == true ? profile!.phoneNumber : 'Nomor Telepon'),
                       const SizedBox(height: 22),
                       _ProfileText(text: profile?.email.isNotEmpty == true ? profile!.email : 'Email'),
+                      if (profile?.role == 'admin') ...[
+                        const SizedBox(height: 22),
+                        PrimaryButton(
+                          text: 'ADMIN PAYMENT',
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const AdminPaymentScreen()),
+                            );
+                          },
+                        ),
+                      ],
                       const SizedBox(height: 70),
                       PrimaryButton(text: 'LOGOUT', onPressed: logout),
                     ],
