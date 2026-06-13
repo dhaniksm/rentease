@@ -31,16 +31,57 @@ class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
         final data = json.decode(response.body);
         setState(() {
           historyData = data is List ? data : (data['data'] ?? []);
+          if (historyData.isEmpty) {
+            _loadMockData();
+          }
           isLoading = false;
         });
       } else {
-        setState(() => isLoading = false);
+        setState(() {
+          _loadMockData();
+          isLoading = false;
+        });
         debugPrint('Gagal memuat data: ${response.statusCode}');
       }
     } catch (e) {
-      setState(() => isLoading = false);
+      setState(() {
+        _loadMockData();
+        isLoading = false;
+      });
       debugPrint('Error: $e');
     }
+  }
+
+  void _loadMockData() {
+    historyData = [
+      {
+        "vehicle_name": "AVANZA 2017 - W 7777 P",
+        "renter_name": "Lovya Cantik",
+        "waktu_sewa": "7 hari",
+        "pickup": "21-05-2026",
+        "pengembalian": "27-05-2026",
+        "total_pembayaran": "Rp. 5.000.000",
+        "denda": ""
+      },
+      {
+        "vehicle_name": "AVANZA 2017 - W 7777 P",
+        "renter_name": "Lovya Cantik",
+        "waktu_sewa": "7 hari",
+        "pickup": "21-05-2026",
+        "pengembalian": "27-05-2026",
+        "total_pembayaran": "Rp. 5.000.000",
+        "denda": ""
+      },
+      {
+        "vehicle_name": "SCOOPY 2018 - P 8888 W",
+        "renter_name": "Adel Bondowoso",
+        "waktu_sewa": "3 hari",
+        "pickup": "21-05-2026",
+        "pengembalian": "23-05-2026",
+        "total_pembayaran": "Rp. 225.00.000",
+        "denda": ""
+      }
+    ];
   }
 
   @override
@@ -79,28 +120,71 @@ class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.white))
-          : historyData.isEmpty
-              ? const Center(
-                  child: Text(
-                    'Belum ada riwayat',
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+          : ListView.builder(
+              padding: const EdgeInsets.all(16.0),
+              itemCount: historyData.length,
+              itemBuilder: (context, index) {
+                final item = historyData[index];
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16.0),
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                )
-              : ListView.builder(
-                  itemCount: historyData.length,
-                  itemBuilder: (context, index) {
-                    final item = historyData[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      child: ListTile(
-                        title: Text('Transaksi #${item['id'] ?? index}'),
-                        subtitle: Text(item['status'] ?? 'Menunggu pembayaran'),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 80,
+                        height: 110,
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          border: Border.all(color: Colors.white, width: 1.5),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                    );
-                  },
-                ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item['vehicle_name'] ?? 'AVANZA 2017 - W 7777 P',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              item['renter_name'] ?? 'Lovya Cantik',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildDetailRow('Waktu Sewa', item['waktu_sewa'] ?? '-'),
+                            const SizedBox(height: 4),
+                            _buildDetailRow('Pickup', item['pickup'] ?? '-'),
+                            const SizedBox(height: 4),
+                            _buildDetailRow('Pengembalian', item['pengembalian'] ?? '-'),
+                            const SizedBox(height: 4),
+                            _buildDetailRow('Total Pembayaran', item['total_pembayaran'] ?? '-'),
+                            const SizedBox(height: 4),
+                            _buildDetailRow('Denda', item['denda'] ?? ''),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: backgroundColor,
         type: BottomNavigationBarType.fixed,
@@ -135,6 +219,35 @@ class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 120,
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
