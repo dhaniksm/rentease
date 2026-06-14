@@ -90,16 +90,24 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
 
     try {
       if (editedVehicle == null) {
-        await context.read<VehicleProvider>().addVehicle(vehicle, selectedImage);
+        await context.read<VehicleProvider>().addVehicle(
+          vehicle,
+          selectedImage,
+        );
       } else {
-        await context.read<VehicleProvider>().updateVehicle(vehicle, selectedImage);
+        await context.read<VehicleProvider>().updateVehicle(
+          vehicle,
+          selectedImage,
+        );
       }
 
       if (!mounted) return;
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
@@ -130,12 +138,16 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                         borderRadius: BorderRadius.circular(8),
                         child: Image.file(selectedImage!, fit: BoxFit.cover),
                       )
-                    : editedVehicle?.imageUrl != null && editedVehicle!.imageUrl!.isNotEmpty
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(editedVehicle!.imageUrl!, fit: BoxFit.cover),
-                          )
-                        : const Icon(Icons.add, color: AppColors.maroon, size: 54),
+                    : editedVehicle?.imageUrl != null &&
+                          editedVehicle!.imageUrl!.isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          editedVehicle!.imageUrl!,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : const Icon(Icons.add, color: AppColors.maroon, size: 54),
               ),
             ),
             const SizedBox(height: 18),
@@ -154,9 +166,14 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                 DropdownMenuItem(value: 'MOTOR', child: Text('MOTOR')),
                 DropdownMenuItem(value: 'MOBIL', child: Text('MOBIL')),
               ],
-              onChanged: (value) => setState(() => vehicleType = value ?? 'MOTOR'),
+              onChanged: (value) =>
+                  setState(() => vehicleType = value ?? 'MOTOR'),
               decoration: _inputDecoration(),
-              style: const TextStyle(color: AppColors.maroon, fontWeight: FontWeight.bold, fontSize: 18),
+              style: const TextStyle(
+                color: AppColors.maroon,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
             ),
             _Label('Status'),
             DropdownButtonFormField<String>(
@@ -165,12 +182,20 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                 DropdownMenuItem(value: 'available', child: Text('available')),
                 DropdownMenuItem(value: 'rented', child: Text('rented')),
               ],
-              onChanged: (value) => setState(() => status = value ?? 'available'),
+              onChanged: (value) =>
+                  setState(() => status = value ?? 'available'),
               decoration: _inputDecoration(),
-              style: const TextStyle(color: AppColors.maroon, fontWeight: FontWeight.bold, fontSize: 18),
+              style: const TextStyle(
+                color: AppColors.maroon,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
             ),
             _Label('Harga Peminjaman /hari'),
-            _Input(controller: priceController, keyboardType: TextInputType.number),
+            _Input(
+              controller: priceController,
+              keyboardType: TextInputType.number,
+            ),
             _Label('Deskripsi'),
             _Input(controller: descriptionController),
             const SizedBox(height: 14),
@@ -213,7 +238,10 @@ class _Label extends StatelessWidget {
       padding: const EdgeInsets.only(top: 8, left: 6, bottom: 4),
       child: Text(
         text,
-        style: const TextStyle(color: AppColors.maroon, fontWeight: FontWeight.bold),
+        style: const TextStyle(
+          color: AppColors.maroon,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
@@ -234,7 +262,10 @@ class _Input extends StatelessWidget {
       controller: controller,
       keyboardType: keyboardType,
       decoration: InputDecoration(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 10,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(11),
           borderSide: const BorderSide(color: AppColors.maroon, width: 2),

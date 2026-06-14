@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rentease/providers/auth_provider.dart';
 import 'package:rentease/screens/auth/register_screen.dart';
-import 'package:rentease/screens/home/home_screen.dart';
+import 'package:rentease/screens/admin/admin_main_screen.dart';
+import 'package:rentease/screens/user/user_main_screen.dart';
+import 'package:rentease/providers/profile_provider.dart';
 import 'package:rentease/utils/app_colors.dart';
 import 'package:rentease/widgets/app_logo.dart';
 import 'package:rentease/widgets/primary_button.dart';
@@ -28,18 +30,57 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Future<void> login() async {
+    if (emailController.text.trim().isEmpty || passwordController.text.isEmpty) {
+      _showError('Email dan Kata Sandi harus diisi');
+      return;
+    }
+
     try {
       await context.read<AuthProvider>().login(
-            emailController.text.trim(),
-            passwordController.text,
-          );
+        emailController.text.trim(),
+        passwordController.text,
+      );
 
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, HomeScreen.routeName);
-    } catch (e) {
+
+      final profileProvider = context.read<ProfileProvider>();
+      await profileProvider.loadProfile();
+
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+
+      if (profileProvider.profile?.role == 'admin') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminMainScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const UserMainScreen()),
+        );
+      }
+    } catch (e) {
+      String errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
+      if (e.toString().contains('Invalid login credentials')) {
+        errorMessage = 'Email atau kata sandi salah.';
+      } else if (e.toString().contains('SocketException')) {
+        errorMessage = 'Tidak ada koneksi internet.';
+      } else {
+        errorMessage = e.toString().replaceAll('Exception: ', '').replaceAll('AuthException: ', '');
+      }
+      _showError(errorMessage);
     }
   }
 
@@ -52,9 +93,9 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(40),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             child: Container(
-              padding: const EdgeInsets.fromLTRB(46, 72, 46, 32),
+              padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
               decoration: BoxDecoration(
                 color: AppColors.maroon,
                 borderRadius: BorderRadius.circular(34),
@@ -77,9 +118,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text(
                       'Lupa Kata Sandi?',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: AppColors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        color: AppColors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   RentEaseTextField(
@@ -95,21 +136,32 @@ class _LoginScreenState extends State<LoginScreen> {
                     isLoading: authProvider.isLoading,
                     onPressed: login,
                   ),
-                  const SizedBox(height: 92),
+                  const SizedBox(height: 40),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
                         'Belum Punya Akun?',
-                        style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: AppColors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.pushNamed(context, RegisterScreen.routeName);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const RegisterScreen(),
+                            ),
+                          );
                         },
                         child: const Text(
                           'Register',
-                          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],

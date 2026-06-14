@@ -31,7 +31,10 @@ class PrimaryButton extends StatelessWidget {
           ? const SizedBox(
               width: 18,
               height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
             )
           : Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
     );

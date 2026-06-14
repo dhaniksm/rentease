@@ -28,10 +28,14 @@ class VehicleModel {
       id: json['id']?.toString() ?? '',
       vehicleName: json['vehicle_name'] ?? json['name'] ?? json['nama'] ?? '',
       brand: json['brand'] ?? json['merk'] ?? '',
-      vehicleType: json['vehicle_type'] ?? json['type'] ?? json['jenis'] ?? 'motor',
-      plateNumber: json['plate_number'] ?? json['plate'] ?? json['plat_nomor'] ?? '',
+      vehicleType:
+          json['vehicle_type'] ?? json['type'] ?? json['jenis'] ?? 'motor',
+      plateNumber:
+          json['plate_number'] ?? json['plate'] ?? json['plat_nomor'] ?? '',
       chassisNumber: json['chassis_number'] ?? json['nomor_rangka'] ?? '',
-      pricePerDay: _toInt(json['price_per_day'] ?? json['price'] ?? json['harga']),
+      pricePerDay: _toInt(
+        json['price_per_day'] ?? json['price'] ?? json['harga'],
+      ),
       status: json['status'] ?? 'available',
       imageUrl: json['image_url'] ?? json['photo_url'] ?? json['foto'],
       description: json['description'] ?? json['deskripsi'],

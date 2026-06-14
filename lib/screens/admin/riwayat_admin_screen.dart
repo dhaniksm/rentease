@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:provider/provider.dart';
+import 'package:rentease/providers/rental_provider.dart';
 
 class RiwayatAdminScreen extends StatefulWidget {
   const RiwayatAdminScreen({super.key});
@@ -11,7 +11,7 @@ class RiwayatAdminScreen extends StatefulWidget {
 
 class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
   final String baseUrl = 'https://rentase-api.vercel.app/';
-  
+
   List<dynamic> historyData = [];
   bool isLoading = true;
 
@@ -22,203 +22,156 @@ class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
   }
 
   Future<void> fetchHistoryData() async {
-    final url = Uri.parse('${baseUrl}api/history'); 
-    
+    setState(() {
+      isLoading = true;
+    });
+
     try {
-      final response = await http.get(url);
-      
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          historyData = data is List ? data : (data['data'] ?? []);
-          if (historyData.isEmpty) {
-            _loadMockData();
-          }
-          isLoading = false;
-        });
-      } else {
-        setState(() {
+      final rentalProvider = context.read<RentalProvider>();
+      await rentalProvider.loadRentals(); // load all rentals for admin
+
+      setState(() {
+        historyData = rentalProvider.rawRentals;
+        if (historyData.isEmpty) {
           _loadMockData();
-          isLoading = false;
-        });
-        debugPrint('Gagal memuat data: ${response.statusCode}');
-      }
+        }
+      });
     } catch (e) {
       setState(() {
         _loadMockData();
-        isLoading = false;
       });
       debugPrint('Error: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
   void _loadMockData() {
-    historyData = [
-      {
-        "vehicle_name": "AVANZA 2017 - W 7777 P",
-        "renter_name": "Lovya Cantik",
-        "waktu_sewa": "7 hari",
-        "pickup": "21-05-2026",
-        "pengembalian": "27-05-2026",
-        "total_pembayaran": "Rp. 5.000.000",
-        "denda": ""
-      },
-      {
-        "vehicle_name": "AVANZA 2017 - W 7777 P",
-        "renter_name": "Lovya Cantik",
-        "waktu_sewa": "7 hari",
-        "pickup": "21-05-2026",
-        "pengembalian": "27-05-2026",
-        "total_pembayaran": "Rp. 5.000.000",
-        "denda": ""
-      },
-      {
-        "vehicle_name": "SCOOPY 2018 - P 8888 W",
-        "renter_name": "Adel Bondowoso",
-        "waktu_sewa": "3 hari",
-        "pickup": "21-05-2026",
-        "pengembalian": "23-05-2026",
-        "total_pembayaran": "Rp. 225.00.000",
-        "denda": ""
-      }
-    ];
+    historyData = [];
   }
 
   @override
   Widget build(BuildContext context) {
-    const Color backgroundColor = Color(0xFF6B0B1E);
-
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
-        leading: const Padding(
-          padding: EdgeInsets.all(8.0),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
           child: CircleAvatar(
-            backgroundImage: NetworkImage(
-              'https://i.pravatar.cc/150?img=5',
-            ),
+            backgroundColor: AppColors.maroon.withOpacity(0.1),
+            child: const Icon(Icons.admin_panel_settings, color: AppColors.maroon),
           ),
         ),
         title: const Text(
           'RIWAYAT',
           style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+            color: AppColors.maroon,
+            fontWeight: FontWeight.w900,
             letterSpacing: 1.2,
-            fontSize: 20,
           ),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white, size: 32),
-            onPressed: () {},
+            icon: const Icon(Icons.refresh, color: AppColors.maroon, size: 28),
+            onPressed: fetchHistoryData,
           ),
         ],
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.white))
-          : ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: historyData.length,
-              itemBuilder: (context, index) {
-                final item = historyData[index];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16.0),
+          ? const Center(child: CircularProgressIndicator(color: AppColors.maroon))
+          : historyData.isEmpty
+              ? const Center(
+                  child: Text(
+                    'Belum ada riwayat penyewaan.',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                )
+              : ListView.builder(
                   padding: const EdgeInsets.all(16.0),
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    border: Border.all(color: Colors.white, width: 1.5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 80,
-                        height: 110,
-                        decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          border: Border.all(color: Colors.white, width: 1.5),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                  itemCount: historyData.length,
+                  itemBuilder: (context, index) {
+                    final item = historyData[index];
+                    final vehicle = item['vehicle'] ?? {};
+                    final profile = item['profiles'] ?? {};
+                    
+                    final String vName = '${vehicle['brand'] ?? ''} ${vehicle['vehicle_name'] ?? ''}'.trim();
+                    final String pName = profile['full_name'] ?? 'Unknown User';
+                    
+                    final String pickup = (item['start_date'] ?? '').split('T').first;
+                    final String pengembalian = (item['expected_return_date'] ?? '').split('T').first;
+                    final String total = item['total_price']?.toString() ?? '0';
+                    final String status = item['status'] ?? '-';
+                    
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16.0),
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: AppColors.maroon.withOpacity(0.2), width: 1.5),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.maroon.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item['vehicle_name'] ?? 'AVANZA 2017 - W 7777 P',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                              ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 110,
+                            decoration: BoxDecoration(
+                              color: AppColors.maroon.withOpacity(0.05),
+                              border: Border.all(color: AppColors.maroon.withOpacity(0.2), width: 1.5),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              item['renter_name'] ?? 'Lovya Cantik',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  vName.isNotEmpty ? vName : 'Kendaraan Tidak Diketahui',
+                                  style: const TextStyle(
+                                    color: AppColors.maroon,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  pName,
+                                  style: TextStyle(
+                                    color: AppColors.maroon.withOpacity(0.7),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                _buildDetailRow('Status', status.toUpperCase()),
+                                const SizedBox(height: 4),
+                                _buildDetailRow('Pickup', pickup),
+                                const SizedBox(height: 4),
+                                _buildDetailRow('Pengembalian', pengembalian),
+                                const SizedBox(height: 4),
+                                _buildDetailRow('Total Harga', 'Rp $total'),
+                              ],
                             ),
-                            const SizedBox(height: 12),
-                            _buildDetailRow('Waktu Sewa', item['waktu_sewa'] ?? '-'),
-                            const SizedBox(height: 4),
-                            _buildDetailRow('Pickup', item['pickup'] ?? '-'),
-                            const SizedBox(height: 4),
-                            _buildDetailRow('Pengembalian', item['pengembalian'] ?? '-'),
-                            const SizedBox(height: 4),
-                            _buildDetailRow('Total Pembayaran', item['total_pembayaran'] ?? '-'),
-                            const SizedBox(height: 4),
-                            _buildDetailRow('Denda', item['denda'] ?? ''),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              },
-            ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: backgroundColor,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
-        currentIndex: 4, 
-        onTap: (index) {},
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined, size: 28),
-            activeIcon: Icon(Icons.home, size: 28),
-            label: 'HOME',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.qr_code_scanner, size: 28),
-            label: 'SCAN QR',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.location_on_outlined, size: 28),
-            activeIcon: Icon(Icons.location_on, size: 28),
-            label: 'MAP',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.fact_check_outlined, size: 28), 
-            label: 'PEMBAYARAN',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history, size: 28),
-            label: 'RIWAYAT',
-          ),
-        ],
-      ),
+                    );
+                  },
+                ),
     );
   }
 
@@ -231,7 +184,7 @@ class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
           child: Text(
             label,
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.maroon,
               fontWeight: FontWeight.bold,
               fontSize: 11,
             ),
@@ -241,7 +194,7 @@ class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
           child: Text(
             value,
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.maroon,
               fontWeight: FontWeight.bold,
               fontSize: 11,
             ),

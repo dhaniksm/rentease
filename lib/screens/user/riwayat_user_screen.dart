@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:provider/provider.dart';
+import 'package:rentease/providers/rental_provider.dart';
+import 'package:rentease/providers/profile_provider.dart';
 
 class RiwayatUserScreen extends StatefulWidget {
   const RiwayatUserScreen({super.key});
@@ -11,7 +12,7 @@ class RiwayatUserScreen extends StatefulWidget {
 
 class _RiwayatUserScreenState extends State<RiwayatUserScreen> {
   final String baseUrl = 'https://rentase-api.vercel.app/';
-  
+
   List<dynamic> historyData = [];
   bool isLoading = true;
 
@@ -22,32 +23,39 @@ class _RiwayatUserScreenState extends State<RiwayatUserScreen> {
   }
 
   Future<void> fetchHistoryData() async {
-    final url = Uri.parse('${baseUrl}api/user/history'); 
-    
+    setState(() {
+      isLoading = true;
+    });
+
     try {
-      final response = await http.get(url);
-      
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+      final profileProvider = context.read<ProfileProvider>();
+      if (profileProvider.profile == null) {
+        await profileProvider.loadProfile();
+      }
+      final userId = profileProvider.profile?.id;
+
+      if (userId != null) {
+        final rentalProvider = context.read<RentalProvider>();
+        await rentalProvider.loadUserRentals(userId);
+
         setState(() {
-          historyData = data is List ? data : (data['data'] ?? []);
+          historyData = rentalProvider.rawRentals;
           if (historyData.isEmpty) {
             _loadMockData();
           }
-          isLoading = false;
         });
       } else {
-        setState(() {
-          _loadMockData();
-          isLoading = false;
-        });
+        _loadMockData();
       }
     } catch (e) {
       setState(() {
         _loadMockData();
-        isLoading = false;
       });
       debugPrint('Error: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -59,14 +67,14 @@ class _RiwayatUserScreenState extends State<RiwayatUserScreen> {
         "pickup": "21-05-2026",
         "pengembalian": "27-05-2026",
         "total_pembayaran": "Rp. 5.000.000",
-        "denda": "0"
-      }
+        "denda": "0",
+      },
     ];
   }
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFF6B0B1E);
+    const Color primaryColor = AppColors.maroon;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -125,13 +133,22 @@ class _RiwayatUserScreenState extends State<RiwayatUserScreen> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            _buildDetailRow('Waktu Sewa', item['waktu_sewa'] ?? '-'),
+                            _buildDetailRow(
+                              'Waktu Sewa',
+                              item['waktu_sewa'] ?? '-',
+                            ),
                             const SizedBox(height: 4),
                             _buildDetailRow('Pickup', item['pickup'] ?? '-'),
                             const SizedBox(height: 4),
-                            _buildDetailRow('Pengembalian', item['pengembalian'] ?? '-'),
+                            _buildDetailRow(
+                              'Pengembalian',
+                              item['pengembalian'] ?? '-',
+                            ),
                             const SizedBox(height: 4),
-                            _buildDetailRow('Total Pembayaran', item['total_pembayaran'] ?? '-'),
+                            _buildDetailRow(
+                              'Total Pembayaran',
+                              item['total_pembayaran'] ?? '-',
+                            ),
                             const SizedBox(height: 4),
                             _buildDetailRow('Denda', item['denda'] ?? '-'),
                           ],
@@ -142,41 +159,11 @@ class _RiwayatUserScreenState extends State<RiwayatUserScreen> {
                 );
               },
             ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: primaryColor,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
-        currentIndex: 3, 
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined, size: 28),
-            activeIcon: Icon(Icons.home, size: 28),
-            label: 'UTAMA',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assignment_outlined, size: 28),
-            activeIcon: Icon(Icons.assignment, size: 28),
-            label: 'DAFTAR',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.location_on_outlined, size: 28),
-            activeIcon: Icon(Icons.location_on, size: 28),
-            label: 'PELACAKAN',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history, size: 28),
-            label: 'RIWAYAT',
-          ),
-        ],
-      ),
     );
   }
 
   Widget _buildDetailRow(String label, String value) {
-    const Color primaryColor = Color(0xFF6B0B1E);
+    const Color primaryColor = AppColors.maroon;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -205,3 +192,4 @@ class _RiwayatUserScreenState extends State<RiwayatUserScreen> {
     );
   }
 }
+

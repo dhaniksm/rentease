@@ -41,7 +41,11 @@ class VehicleCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(9),
                 ),
                 child: vehicle.imageUrl == null || vehicle.imageUrl!.isEmpty
-                    ? const Icon(Icons.directions_car, color: AppColors.maroon, size: 34)
+                    ? const Icon(
+                        Icons.directions_car,
+                        color: AppColors.maroon,
+                        size: 34,
+                      )
                     : Image.network(vehicle.imageUrl!, fit: BoxFit.cover),
               ),
             ),
@@ -61,15 +65,24 @@ class VehicleCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     vehicle.brand,
-                    style: const TextStyle(color: AppColors.maroon, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: AppColors.maroon,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Text(
                     '${Formatters.rupiah(vehicle.pricePerDay)}/hari',
-                    style: const TextStyle(color: AppColors.maroon, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: AppColors.maroon,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Text(
                     vehicle.status,
-                    style: const TextStyle(color: AppColors.maroon, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: AppColors.maroon,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -78,11 +91,17 @@ class VehicleCard extends StatelessWidget {
               children: [
                 IconButton(
                   onPressed: onDelete,
-                  icon: const Icon(Icons.delete_outline, color: AppColors.maroon),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: AppColors.maroon,
+                  ),
                 ),
                 IconButton(
                   onPressed: onEdit,
-                  icon: const Icon(Icons.edit_outlined, color: AppColors.maroon),
+                  icon: const Icon(
+                    Icons.edit_outlined,
+                    color: AppColors.maroon,
+                  ),
                 ),
               ],
             ),

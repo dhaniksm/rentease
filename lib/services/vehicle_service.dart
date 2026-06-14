@@ -5,8 +5,10 @@ import 'package:http/http.dart' as http;
 import 'package:rentease/models/vehicle_model.dart';
 import 'package:rentease/core/supabase_config.dart';
 
+import 'package:rentease/core/api_config.dart';
+
 class VehicleService {
-  static const String baseUrl = 'https://rentase-api.vercel.app/api';
+  static String get baseUrl => ApiConfig.baseUrl;
   static const String storageBucket = 'vehicle-images';
 
   Future<void> addVehicle(VehicleModel vehicle) async {
@@ -52,6 +54,23 @@ class VehicleService {
   Future<void> deleteVehicle(String id) async {
     final response = await http.delete(Uri.parse('$baseUrl/vehicles/$id'));
     _checkResponse(response);
+  }
+
+  Future<void> updateStatus(String id, String status) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/vehicles/$id/status'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'status': status}),
+    );
+    _checkResponse(response);
+  }
+
+  Future<List<dynamic>> getVehicleRentalHistory(String id) async {
+    final response = await http.get(Uri.parse('$baseUrl/vehicles/$id/history'));
+    _checkResponse(response);
+
+    final decoded = jsonDecode(response.body);
+    return decoded['data'] ?? [];
   }
 
   Future<String> uploadVehicleImage(File imageFile) async {

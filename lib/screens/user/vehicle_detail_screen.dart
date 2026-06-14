@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:rentease/models/vehicle_model.dart';
 import 'package:rentease/utils/app_colors.dart';
 import 'package:rentease/utils/formatters.dart';
+import 'package:rentease/screens/user/rental_checkout_screen.dart';
 
 class VehicleDetailScreen extends StatelessWidget {
   static const routeName = '/vehicle-detail';
@@ -13,6 +14,7 @@ class VehicleDetailScreen extends StatelessWidget {
     final vehicle = ModalRoute.of(context)!.settings.arguments as VehicleModel;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,20 +32,29 @@ class VehicleDetailScreen extends StatelessWidget {
                     ),
                   ),
                   child: vehicle.imageUrl == null || vehicle.imageUrl!.isEmpty
-                      ? const Icon(Icons.directions_car_filled, color: AppColors.white, size: 120)
+                      ? const Icon(
+                          Icons.directions_car_filled,
+                          color: AppColors.white,
+                          size: 120,
+                        )
                       : ClipRRect(
                           borderRadius: const BorderRadius.only(
                             bottomLeft: Radius.circular(34),
                             bottomRight: Radius.circular(34),
                           ),
-                          child: Image.network(vehicle.imageUrl!, fit: BoxFit.cover),
+                          child: Image.network(
+                            vehicle.imageUrl!,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                 ),
                 Positioned(
                   top: 20,
                   left: 12,
                   child: IconButton.filled(
-                    style: IconButton.styleFrom(backgroundColor: AppColors.darkMaroon),
+                    style: IconButton.styleFrom(
+                      backgroundColor: AppColors.maroon.withOpacity(0.8),
+                    ),
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.arrow_back, color: AppColors.white),
                   ),
@@ -52,15 +63,25 @@ class VehicleDetailScreen extends StatelessWidget {
                   right: 0,
                   top: 152,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 26),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 34,
+                      vertical: 26,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.25),
                       borderRadius: BorderRadius.circular(34),
-                      border: Border.all(color: Colors.white.withOpacity(0.25), width: 3),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.25),
+                        width: 3,
+                      ),
                     ),
                     child: Text(
                       '${Formatters.rupiah(vehicle.pricePerDay)}\n/ days',
-                      style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.w900, fontSize: 16),
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ),
@@ -73,7 +94,13 @@ class VehicleDetailScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Center(
-                      child: Text('...', style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        '...',
+                        style: TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                     Row(
                       children: [
@@ -87,20 +114,37 @@ class VehicleDetailScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const Text('4.9', style: TextStyle(color: AppColors.maroon, fontSize: 22, fontWeight: FontWeight.bold)),
+                        const Text(
+                          '4.9',
+                          style: TextStyle(
+                            color: AppColors.maroon,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         const SizedBox(width: 8),
                         const Icon(Icons.star, color: Color(0xFFD7B448)),
                       ],
                     ),
                     Text(
-                      vehicle.description?.isNotEmpty == true ? vehicle.description! : '${vehicle.brand} ${vehicle.vehicleType}',
-                      style: const TextStyle(color: AppColors.maroon, fontWeight: FontWeight.bold, fontSize: 15),
+                      vehicle.description?.isNotEmpty == true
+                          ? vehicle.description!
+                          : '${vehicle.brand} ${vehicle.vehicleType}',
+                      style: const TextStyle(
+                        color: AppColors.maroon,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
                     ),
                     const SizedBox(height: 28),
                     const Divider(color: AppColors.maroon),
                     const Text(
                       'Detail',
-                      style: TextStyle(color: AppColors.maroon, fontWeight: FontWeight.bold, fontSize: 20),
+                      style: TextStyle(
+                        color: AppColors.maroon,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
                     ),
                     const SizedBox(height: 14),
                     Wrap(
@@ -124,16 +168,24 @@ class VehicleDetailScreen extends StatelessWidget {
                 height: 72,
                 child: ElevatedButton(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Fitur booking akan dibuat pada tahap berikutnya')),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RentalCheckoutScreen(),
+                      ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.maroon,
                     foregroundColor: AppColors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  child: const Text('SEWA', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900)),
+                  child: const Text(
+                    'SEWA',
+                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
+                  ),
                 ),
               ),
             ),
@@ -162,7 +214,10 @@ class _DetailBox extends StatelessWidget {
       child: Text(
         text.isEmpty ? '-' : text,
         textAlign: TextAlign.center,
-        style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.bold),
+        style: const TextStyle(
+          color: AppColors.white,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

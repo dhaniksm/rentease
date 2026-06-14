@@ -11,10 +11,7 @@ class AuthService {
     final response = await supabase.auth.signUp(
       email: email,
       password: password,
-      data: {
-        'full_name': fullName,
-        'phone_number': phoneNumber,
-      },
+      data: {'full_name': fullName, 'phone_number': phoneNumber},
     );
 
     final user = response.user;
@@ -24,19 +21,13 @@ class AuthService {
         'full_name': fullName,
         'email': email,
         'phone_number': phoneNumber,
-        'role': 'user',
+        'role': 'user', // Default is always user for security
       });
     }
   }
 
-  Future<void> login({
-    required String email,
-    required String password,
-  }) async {
-    await supabase.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
+  Future<void> login({required String email, required String password}) async {
+    await supabase.auth.signInWithPassword(email: email, password: password);
   }
 
   Future<void> logout() async {

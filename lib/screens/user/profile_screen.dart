@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:rentease/providers/auth_provider.dart';
 import 'package:rentease/providers/profile_provider.dart';
 import 'package:rentease/screens/auth/login_screen.dart';
-import 'package:rentease/screens/payment/admin_payment_screen.dart';
+import 'package:rentease/screens/admin/admin_payment_screen.dart';
 import 'package:rentease/utils/app_colors.dart';
 import 'package:rentease/widgets/primary_button.dart';
 
@@ -25,7 +25,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await context.read<AuthProvider>().logout();
 
     if (!mounted) return;
-    Navigator.pushNamedAndRemoveUntil(context, LoginScreen.routeName, (route) => false);
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
   }
 
   @override
@@ -45,24 +49,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
               borderRadius: BorderRadius.circular(34),
             ),
             child: profileProvider.isLoading
-                ? const Center(child: CircularProgressIndicator(color: AppColors.white))
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppColors.white),
+                  )
                 : Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       CircleAvatar(
                         radius: 42,
                         backgroundColor: AppColors.white,
-                        backgroundImage: profile?.avatarUrl == null ? null : NetworkImage(profile!.avatarUrl!),
+                        backgroundImage: profile?.avatarUrl == null
+                            ? null
+                            : NetworkImage(profile!.avatarUrl!),
                         child: profile?.avatarUrl == null
-                            ? const Icon(Icons.person, color: AppColors.maroon, size: 54)
+                            ? const Icon(
+                                Icons.person,
+                                color: AppColors.maroon,
+                                size: 54,
+                              )
                             : null,
                       ),
                       const SizedBox(height: 66),
-                      _ProfileText(text: profile?.fullName.isNotEmpty == true ? profile!.fullName : 'Nama User'),
+                      _ProfileText(
+                        text: profile?.fullName.isNotEmpty == true
+                            ? profile!.fullName
+                            : 'Nama User',
+                      ),
                       const SizedBox(height: 22),
-                      _ProfileText(text: profile?.phoneNumber.isNotEmpty == true ? profile!.phoneNumber : 'Nomor Telepon'),
+                      _ProfileText(
+                        text: profile?.phoneNumber.isNotEmpty == true
+                            ? profile!.phoneNumber
+                            : 'Nomor Telepon',
+                      ),
                       const SizedBox(height: 22),
-                      _ProfileText(text: profile?.email.isNotEmpty == true ? profile!.email : 'Email'),
+                      _ProfileText(
+                        text: profile?.email.isNotEmpty == true
+                            ? profile!.email
+                            : 'Email',
+                      ),
                       if (profile?.role == 'admin') ...[
                         const SizedBox(height: 22),
                         PrimaryButton(
@@ -70,7 +94,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const AdminPaymentScreen()),
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const AdminPaymentScreen(),
+                              ),
                             );
                           },
                         ),
@@ -103,7 +130,10 @@ class _ProfileText extends StatelessWidget {
       child: Text(
         text,
         textAlign: TextAlign.center,
-        style: const TextStyle(color: AppColors.white, fontWeight: FontWeight.bold),
+        style: const TextStyle(
+          color: AppColors.white,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

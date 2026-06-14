@@ -1,6 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import 'package:rentease/providers/payment_provider.dart';
 
 // Model for Rental data to ensure Clean Code and type safety
 class RentalModel {
@@ -29,15 +29,18 @@ class RentalModel {
   factory RentalModel.fromJson(Map<String, dynamic> json) {
     return RentalModel(
       id: json['id'] ?? '',
-      vehicleName: json['vehicle_name'] ?? json['nama_kendaraan'] ?? 'Unknown Vehicle',
+      vehicleName:
+          json['vehicle_name'] ?? json['nama_kendaraan'] ?? 'Unknown Vehicle',
       plateNumber: json['plate_number'] ?? json['plat_nomor'] ?? '-',
       fullName: json['full_name'] ?? json['nama_penyewa'] ?? 'Unknown Customer',
       startDate: json['start_date'] ?? json['waktu_sewa'],
       totalDays: json['total_days'] ?? json['durasi_sewa'] ?? 1,
-      totalPrice: (json['total_price'] ?? json['total_pembayaran'] ?? 0) is double
+      totalPrice:
+          (json['total_price'] ?? json['total_pembayaran'] ?? 0) is double
           ? (json['total_price'] ?? json['total_pembayaran'] ?? 0).toInt()
           : (json['total_price'] ?? json['total_pembayaran'] ?? 0),
-      rentalStatus: json['rental_status'] ?? json['status'] ?? 'pending_verification',
+      rentalStatus:
+          json['rental_status'] ?? json['status'] ?? 'pending_verification',
       paymentMethod: json['payment_method'],
     );
   }
@@ -51,9 +54,6 @@ class AdminPaymentScreen extends StatefulWidget {
 }
 
 class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
-  // CONFIGURASI API (Localhost)
-  static const String baseUrl = 'http://localhost:3000';
-
   List<RentalModel> _rentals = [];
   List<RentalModel> _filteredRentals = [];
   bool _isLoading = false;
@@ -63,7 +63,9 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
   // Colors matching Figma exactly
   final Color maroonDark = const Color(0xFF6B0014); // #6B0014
   final Color bgWhite = const Color(0xFFFFFFFF);
-  final Color textBrownMuted = const Color(0xFF800000); // Maroon-brownish text for subtitle
+  final Color textBrownMuted = const Color(
+    0xFF800000,
+  ); // Maroon-brownish text for subtitle
 
   final TextEditingController _searchController = TextEditingController();
 
@@ -89,35 +91,16 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
     });
 
     try {
-      final response = await http.get(Uri.parse('$baseUrl/api/payments'));
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        if (jsonResponse['success'] == true && jsonResponse['data'] != null) {
-          final List<dynamic> dataList = jsonResponse['data'];
-          setState(() {
-            _rentals = dataList.map((json) => RentalModel.fromJson(json)).toList();
-            _applyFilterAndSearch();
-          });
-          return;
-        }
-      }
-      _useMockFallback();
+      final paymentProvider = context.read<PaymentProvider>();
+      await paymentProvider.loadPayments();
+
+      setState(() {
+        _rentals = paymentProvider.rawPayments
+            .map((json) => RentalModel.fromJson(json))
+            .toList();
+        _applyFilterAndSearch();
+      });
     } catch (e) {
-      // Fallback for Android Emulator (10.0.2.2)
-      try {
-        final fallbackResponse = await http.get(Uri.parse('http://10.0.2.2:3000/api/payments'));
-        if (fallbackResponse.statusCode == 200) {
-          final Map<String, dynamic> jsonResponse = json.decode(fallbackResponse.body);
-          if (jsonResponse['success'] == true && jsonResponse['data'] != null) {
-            final List<dynamic> dataList = jsonResponse['data'];
-            setState(() {
-              _rentals = dataList.map((json) => RentalModel.fromJson(json)).toList();
-              _applyFilterAndSearch();
-            });
-            return;
-          }
-        }
-      } catch (_) {}
       _useMockFallback();
     } finally {
       setState(() {
@@ -133,7 +116,7 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
     });
   }
 
-  // Verify payment using HTTP PATCH
+  // Verify payment using Provider
   Future<void> _verifyPayment(String id, String method) async {
     setState(() {
       _isLoading = true;
@@ -160,39 +143,19 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
     }
 
     try {
-      final uri = Uri.parse('$baseUrl/api/payments/verify/$id');
-      final response = await http.patch(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'payment_method': method}),
-      );
+      final paymentProvider = context.read<PaymentProvider>();
+      await paymentProvider.verifyPayment(id);
 
-      if (response.statusCode == 200) {
-        _showSuccessSnackBar('Pembayaran berhasil diverifikasi sebagai ${method.toUpperCase()}!');
-        _fetchRentals();
-      } else {
-        _showErrorSnackBar('Gagal memverifikasi pembayaran di server.');
-        _fetchRentals(); // Revert local change
-      }
+      _showSuccessSnackBar(
+        'Pembayaran berhasil diverifikasi sebagai ${method.toUpperCase()}!',
+      );
+      _fetchRentals();
     } catch (e) {
-      // Fallback for Android emulator
-      try {
-        final uri = Uri.parse('http://10.0.2.2:3000/api/payments/verify/$id');
-        final response = await http.patch(
-          uri,
-          headers: {'Content-Type': 'application/json'},
-          body: json.encode({'payment_method': method}),
-        );
-        if (response.statusCode == 200) {
-          _showSuccessSnackBar('Pembayaran berhasil diverifikasi!');
-          _fetchRentals();
-          return;
-        }
-      } catch (_) {}
-      
       // If we are offline/using mocks, keep the simulated state
       if (id.startsWith('mock-')) {
-        _showSuccessSnackBar('Pembayaran (MOCK) berhasil diverifikasi sebagai ${method.toUpperCase()}!');
+        _showSuccessSnackBar(
+          'Pembayaran (MOCK) berhasil diverifikasi sebagai ${method.toUpperCase()}!',
+        );
       } else {
         _showErrorSnackBar('Gagal menghubungkan ke server untuk verifikasi.');
         _fetchRentals();
@@ -223,7 +186,9 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
         final vehicle = rental.vehicleName?.toLowerCase() ?? '';
         final renter = rental.fullName?.toLowerCase() ?? '';
         final plate = rental.plateNumber?.toLowerCase() ?? '';
-        return vehicle.contains(query) || renter.contains(query) || plate.contains(query);
+        return vehicle.contains(query) ||
+            renter.contains(query) ||
+            plate.contains(query);
       }).toList();
     }
 
@@ -234,19 +199,13 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: maroonDark,
-      ),
+      SnackBar(content: Text(message), backgroundColor: maroonDark),
     );
   }
 
   void _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green[800],
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.green[800]),
     );
   }
 
@@ -276,9 +235,7 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
             Container(
               height: 70,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: maroonDark,
-              ),
+              decoration: BoxDecoration(color: bgWhite),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -290,16 +247,16 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 1.5),
                     ),
-                    child: const CircleAvatar(
-                      backgroundImage: NetworkImage('https://i.imgur.com/yGp85CG.png'),
-                      backgroundColor: Colors.grey,
+                    child: CircleAvatar(
+                      backgroundColor: maroonDark.withOpacity(0.1),
+                      child: Icon(Icons.admin_panel_settings, color: maroonDark),
                     ),
                   ),
                   // App Bar Title
                   const Text(
                     'PEMBAYARAN',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: maroonDark,
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.0,
@@ -307,8 +264,8 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                   ),
                   // Hamburger Menu Icon
                   IconButton(
-                    icon: const Icon(Icons.menu, color: Colors.white, size: 32),
-                    onPressed: () {},
+                    icon: Icon(Icons.refresh, color: maroonDark, size: 28),
+                    onPressed: _fetchRentals,
                   ),
                 ],
               ),
@@ -324,100 +281,6 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // 2. DUA KOTAK RINGKASAN DATA
-                      Row(
-                        children: [
-                          // Total Pendapatan Box
-                          Expanded(
-                            child: Container(
-                              height: 100,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: maroonDark,
-                                borderRadius: BorderRadius.circular(28),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Text(
-                                    'TOTAL',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                  const Text(
-                                    'PENDAPATAN',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  const Text(
-                                    'Rp. 48.000.0000',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          // Transaksi Berhasil Box
-                          Expanded(
-                            child: Container(
-                              height: 100,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: maroonDark,
-                                borderRadius: BorderRadius.circular(28),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Text(
-                                    'TRANSAKSI',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                  const Text(
-                                    'BERHASIL',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  const Text(
-                                    '457 Transaksi',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
                       const SizedBox(height: 16),
 
                       // 3. SEARCH BAR
@@ -429,25 +292,45 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                             _applyFilterAndSearch();
                           });
                         },
-                        style: TextStyle(color: maroonDark, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: maroonDark,
+                          fontWeight: FontWeight.bold,
+                        ),
                         decoration: InputDecoration(
                           prefixIcon: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: Icon(Icons.search, color: maroonDark, size: 28),
+                            child: Icon(
+                              Icons.search,
+                              color: maroonDark,
+                              size: 28,
+                            ),
                           ),
-                          prefixIconConstraints: const BoxConstraints(minWidth: 40),
+                          prefixIconConstraints: const BoxConstraints(
+                            minWidth: 40,
+                          ),
                           hintText: 'Cari',
-                          hintStyle: TextStyle(color: maroonDark.withOpacity(0.6), fontWeight: FontWeight.bold),
+                          hintStyle: TextStyle(
+                            color: maroonDark.withOpacity(0.6),
+                            fontWeight: FontWeight.bold,
+                          ),
                           filled: true,
                           fillColor: bgWhite,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                          ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: maroonDark, width: 1.8),
+                            borderSide: BorderSide(
+                              color: maroonDark,
+                              width: 1.8,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: maroonDark, width: 2.2),
+                            borderSide: BorderSide(
+                              color: maroonDark,
+                              width: 2.2,
+                            ),
                           ),
                         ),
                       ),
@@ -470,7 +353,9 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                           ? Center(
                               child: Padding(
                                 padding: const EdgeInsets.all(32.0),
-                                child: CircularProgressIndicator(color: maroonDark),
+                                child: CircularProgressIndicator(
+                                  color: maroonDark,
+                                ),
                               ),
                             )
                           : ListView.builder(
@@ -485,24 +370,6 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                     ],
                   ),
                 ),
-              ),
-            ),
-
-            // 6. BOTTOM NAVIGATION BAR
-            Container(
-              height: 70,
-              decoration: BoxDecoration(
-                color: maroonDark,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildNavItem(Icons.home_outlined, 'HOME', false),
-                  _buildNavItem(Icons.qr_code_scanner, 'SCAN QR', false),
-                  _buildNavItem(Icons.location_on_outlined, 'MAP', false),
-                  _buildNavItem(Icons.assignment_turned_in, 'PEMBAYARAN', true),
-                  _buildNavItem(Icons.history, 'RIWAYAT', false),
-                ],
               ),
             ),
           ],
@@ -618,13 +485,15 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                         color: maroonDark,
                       ),
                     ),
-                    
+
                     // Dropdown Button Form Field styled as a Maroon Capsule
                     SizedBox(
                       height: 28,
                       width: 125,
                       child: DropdownButtonFormField<String>(
-                        value: (rental.paymentMethod == 'cash' || rental.paymentMethod == 'transfer')
+                        value:
+                            (rental.paymentMethod == 'cash' ||
+                                rental.paymentMethod == 'transfer')
                             ? rental.paymentMethod
                             : null,
                         alignment: Alignment.centerRight,
@@ -636,7 +505,10 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                           letterSpacing: 0.5,
                         ),
                         decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 0,
+                          ),
                           filled: true,
                           fillColor: maroonDark,
                           enabledBorder: OutlineInputBorder(
@@ -648,7 +520,11 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                             borderSide: BorderSide.none,
                           ),
                         ),
-                        icon: const Icon(Icons.arrow_drop_down, color: Colors.white, size: 18),
+                        icon: const Icon(
+                          Icons.arrow_drop_down,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                         hint: const Text(
                           'PILIH',
                           style: TextStyle(
@@ -664,7 +540,9 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                             child: Text(
                               'CASH',
                               style: TextStyle(
-                                color: (rental.paymentMethod == 'cash') ? Colors.white : Colors.white70,
+                                color: (rental.paymentMethod == 'cash')
+                                    ? Colors.white
+                                    : Colors.white70,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w900,
                               ),
@@ -675,7 +553,9 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                             child: Text(
                               'TRANSFER',
                               style: TextStyle(
-                                color: (rental.paymentMethod == 'transfer') ? Colors.white : Colors.white70,
+                                color: (rental.paymentMethod == 'transfer')
+                                    ? Colors.white
+                                    : Colors.white70,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w900,
                               ),
@@ -699,31 +579,4 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
     );
   }
 
-  // Bottom Navigation Bar Item builder
-  Widget _buildNavItem(IconData icon, String label, bool isSelected) {
-    return Expanded(
-      child: InkWell(
-        onTap: () {},
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: Colors.white,
-              size: 28,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 9,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

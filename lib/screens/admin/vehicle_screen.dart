@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rentease/models/vehicle_model.dart';
 import 'package:rentease/providers/vehicle_provider.dart';
-import 'package:rentease/screens/vehicle/vehicle_detail_screen.dart';
-import 'package:rentease/screens/vehicle/vehicle_form_screen.dart';
+import 'package:rentease/screens/user/vehicle_detail_screen.dart';
+import 'package:rentease/screens/admin/vehicle_form_screen.dart';
 import 'package:rentease/utils/app_colors.dart';
 import 'package:rentease/widgets/main_app_bar.dart';
 import 'package:rentease/widgets/vehicle_card.dart';
@@ -35,9 +35,11 @@ class _VehicleScreenState extends State<VehicleScreen> {
     final keyword = searchController.text.toLowerCase();
 
     return vehicles.where((vehicle) {
-      final matchType = selectedType == 'SEMUA' ||
+      final matchType =
+          selectedType == 'SEMUA' ||
           vehicle.vehicleType.toLowerCase() == selectedType.toLowerCase();
-      final matchSearch = vehicle.vehicleName.toLowerCase().contains(keyword) ||
+      final matchSearch =
+          vehicle.vehicleName.toLowerCase().contains(keyword) ||
           vehicle.brand.toLowerCase().contains(keyword);
       return matchType && matchSearch;
     }).toList();
@@ -50,8 +52,14 @@ class _VehicleScreenState extends State<VehicleScreen> {
         title: const Text('Hapus Kendaraan'),
         content: const Text('Yakin ingin menghapus kendaraan ini?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Hapus')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Hapus'),
+          ),
         ],
       ),
     );
@@ -62,7 +70,9 @@ class _VehicleScreenState extends State<VehicleScreen> {
       await context.read<VehicleProvider>().deleteVehicle(id);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -77,7 +87,10 @@ class _VehicleScreenState extends State<VehicleScreen> {
         backgroundColor: AppColors.maroon,
         foregroundColor: AppColors.white,
         onPressed: () {
-          Navigator.pushNamed(context, VehicleFormScreen.routeName);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const VehicleFormScreen()),
+          );
         },
         child: const Icon(Icons.add, size: 34),
       ),
@@ -91,14 +104,23 @@ class _VehicleScreenState extends State<VehicleScreen> {
               decoration: InputDecoration(
                 hintText: 'Cari',
                 prefixIcon: const Icon(Icons.search, color: AppColors.maroon),
-                hintStyle: const TextStyle(color: AppColors.maroon, fontWeight: FontWeight.bold),
+                hintStyle: const TextStyle(
+                  color: AppColors.maroon,
+                  fontWeight: FontWeight.bold,
+                ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.maroon, width: 2),
+                  borderSide: const BorderSide(
+                    color: AppColors.maroon,
+                    width: 2,
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.maroon, width: 2),
+                  borderSide: const BorderSide(
+                    color: AppColors.maroon,
+                    width: 2,
+                  ),
                 ),
               ),
             ),
@@ -126,14 +148,19 @@ class _VehicleScreenState extends State<VehicleScreen> {
             const SizedBox(height: 26),
             Expanded(
               child: vehicleProvider.isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.maroon))
+                  ? const Center(
+                      child: CircularProgressIndicator(color: AppColors.maroon),
+                    )
                   : RefreshIndicator(
                       onRefresh: context.read<VehicleProvider>().loadVehicles,
                       child: vehicles.isEmpty
                           ? const Center(
                               child: Text(
                                 'Belum ada kendaraan',
-                                style: TextStyle(color: AppColors.maroon, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  color: AppColors.maroon,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             )
                           : ListView.builder(
@@ -143,17 +170,21 @@ class _VehicleScreenState extends State<VehicleScreen> {
                                 return VehicleCard(
                                   vehicle: vehicle,
                                   onTap: () {
-                                    Navigator.pushNamed(
+                                    Navigator.push(
                                       context,
-                                      VehicleDetailScreen.routeName,
-                                      arguments: vehicle,
+                                      MaterialPageRoute(
+                                        builder: (context) => const VehicleDetailScreen(),
+                                        settings: RouteSettings(arguments: vehicle),
+                                      ),
                                     );
                                   },
                                   onEdit: () {
-                                    Navigator.pushNamed(
+                                    Navigator.push(
                                       context,
-                                      VehicleFormScreen.routeName,
-                                      arguments: vehicle,
+                                      MaterialPageRoute(
+                                        builder: (context) => const VehicleFormScreen(),
+                                        settings: RouteSettings(arguments: vehicle),
+                                      ),
                                     );
                                   },
                                   onDelete: () => deleteVehicle(vehicle.id),

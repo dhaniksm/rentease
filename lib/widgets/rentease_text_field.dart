@@ -30,7 +30,10 @@ class RentEaseTextField extends StatelessWidget {
         prefixIcon: icon == null ? null : Icon(icon, color: color),
         hintText: hintText,
         hintStyle: TextStyle(color: color, fontWeight: FontWeight.bold),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 10,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: color, width: 2),

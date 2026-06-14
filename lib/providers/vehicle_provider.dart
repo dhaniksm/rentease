@@ -11,10 +11,12 @@ class VehicleProvider extends ChangeNotifier {
   bool isLoading = false;
 
   int get totalVehicles => vehicles.length;
-  int get availableVehicles =>
-      vehicles.where((vehicle) => vehicle.status.toLowerCase() == 'available').length;
-  int get rentedVehicles =>
-      vehicles.where((vehicle) => vehicle.status.toLowerCase() != 'available').length;
+  int get availableVehicles => vehicles
+      .where((vehicle) => vehicle.status.toLowerCase() == 'available')
+      .length;
+  int get rentedVehicles => vehicles
+      .where((vehicle) => vehicle.status.toLowerCase() != 'available')
+      .length;
 
   Future<void> loadVehicles() async {
     isLoading = true;
