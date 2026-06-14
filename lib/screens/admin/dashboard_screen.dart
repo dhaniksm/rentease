@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rentease/providers/dashboard_provider.dart';
@@ -55,7 +54,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           style: TextStyle(
             color: AppColors.maroon,
             fontWeight: FontWeight.w900,
-            letterSpacing: 2.0,
+            fontSize: 20,
+            letterSpacing: 1.2,
           ),
         ),
         centerTitle: true,
@@ -69,8 +69,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               );
             },
             child: CircleAvatar(
-              backgroundColor: AppColors.maroon.withOpacity(0.1),
-              child: const Icon(Icons.admin_panel_settings, color: AppColors.maroon),
+              backgroundColor: AppColors.maroon.withValues(alpha: 0.1),
+              child: const Icon(Icons.person, color: AppColors.maroon),
             ),
           ),
         ),
@@ -152,7 +152,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: AppColors.maroon.withOpacity(0.1),
+                                color: AppColors.maroon.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: const Text(
@@ -172,7 +172,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                             padding: const EdgeInsets.all(32.0),
                             child: Text(
                               'Belum ada transaksi.',
-                              style: TextStyle(color: AppColors.maroon.withOpacity(0.5)),
+                              style: TextStyle(color: AppColors.maroon.withValues(alpha: 0.5)),
                             ),
                           ),
                         )
@@ -209,12 +209,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           end: Alignment.bottomRight,
           colors: [
             AppColors.maroon,
-            AppColors.maroon.withOpacity(0.8),
+            AppColors.maroon.withValues(alpha: 0.8),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.maroon.withOpacity(0.3),
+            color: AppColors.maroon.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -242,12 +242,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               children: [
                 Row(
                   children: [
-                    Icon(Icons.account_balance_wallet, color: Colors.white.withOpacity(0.9), size: 20),
+                    Icon(Icons.account_balance_wallet, color: Colors.white.withValues(alpha: 0.9), size: 20),
                     const SizedBox(width: 8),
                     Text(
                       'TOTAL PENDAPATAN',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.5,
                         fontSize: 12,
@@ -283,7 +283,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text('Bulan ini', style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 10)),
+                    Text('Bulan ini', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 10)),
                   ],
                 ),
               ],
@@ -300,10 +300,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.maroon.withOpacity(0.2)),
+        border: Border.all(color: AppColors.maroon.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.maroon.withOpacity(0.05),
+            color: AppColors.maroon.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -315,7 +315,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 24),
@@ -333,7 +333,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           Text(
             title,
             style: TextStyle(
-              color: AppColors.maroon.withOpacity(0.7),
+              color: AppColors.maroon.withValues(alpha: 0.7),
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -349,10 +349,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.maroon.withOpacity(0.2)),
+        border: Border.all(color: AppColors.maroon.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.maroon.withOpacity(0.05),
+            color: AppColors.maroon.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -385,7 +385,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(color: AppColors.maroon.withOpacity(0.7), fontSize: 10),
+          style: TextStyle(color: AppColors.maroon.withValues(alpha: 0.7), fontSize: 10),
         ),
       ],
     );
@@ -395,7 +395,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     return Container(
       height: 40,
       width: 1,
-      color: AppColors.maroon.withOpacity(0.2),
+      color: AppColors.maroon.withValues(alpha: 0.2),
     );
   }
 
@@ -433,10 +433,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.maroon.withOpacity(0.2)),
+        border: Border.all(color: AppColors.maroon.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.maroon.withOpacity(0.05),
+            color: AppColors.maroon.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -448,7 +448,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
+              color: statusColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(Icons.receipt_long, color: statusColor),
@@ -472,7 +472,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 Text(
                   '$name • $plate',
                   style: TextStyle(
-                    color: AppColors.maroon.withOpacity(0.7),
+                    color: AppColors.maroon.withValues(alpha: 0.7),
                     fontSize: 12,
                   ),
                   maxLines: 1,
@@ -487,7 +487,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.15),
+                  color: statusColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -503,7 +503,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               Text(
                 date.split('T').first,
                 style: TextStyle(
-                  color: AppColors.maroon.withOpacity(0.5),
+                  color: AppColors.maroon.withValues(alpha: 0.5),
                   fontSize: 10,
                 ),
               ),
@@ -524,7 +524,7 @@ class _CurvedChartPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color.withOpacity(0.6)
+      ..color = color.withValues(alpha: 0.6)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3.0;
 
@@ -552,8 +552,8 @@ class _CurvedChartPainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          color.withOpacity(0.3),
-          color.withOpacity(0.0),
+          color.withValues(alpha: 0.3),
+          color.withValues(alpha: 0.0),
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 

@@ -11,10 +11,18 @@ class VehicleService {
   static String get baseUrl => ApiConfig.baseUrl;
   static const String storageBucket = 'vehicle-images';
 
+  Map<String, String> get _headers {
+    final token = supabase.auth.currentSession?.accessToken;
+    return {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
   Future<void> addVehicle(VehicleModel vehicle) async {
     final response = await http.post(
       Uri.parse('$baseUrl/vehicles'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
       body: jsonEncode(vehicle.toJson()),
     );
 
@@ -22,7 +30,7 @@ class VehicleService {
   }
 
   Future<List<VehicleModel>> getVehicles() async {
-    final response = await http.get(Uri.parse('$baseUrl/vehicles'));
+    final response = await http.get(Uri.parse('$baseUrl/vehicles'), headers: _headers);
     _checkResponse(response);
 
     final decoded = jsonDecode(response.body);
@@ -44,7 +52,7 @@ class VehicleService {
   Future<void> updateVehicle(VehicleModel vehicle) async {
     final response = await http.put(
       Uri.parse('$baseUrl/vehicles/${vehicle.id}'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
       body: jsonEncode(vehicle.toJson()),
     );
 
@@ -52,14 +60,14 @@ class VehicleService {
   }
 
   Future<void> deleteVehicle(String id) async {
-    final response = await http.delete(Uri.parse('$baseUrl/vehicles/$id'));
+    final response = await http.delete(Uri.parse('$baseUrl/vehicles/$id'), headers: _headers);
     _checkResponse(response);
   }
 
   Future<void> updateStatus(String id, String status) async {
     final response = await http.patch(
       Uri.parse('$baseUrl/vehicles/$id/status'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
       body: jsonEncode({'status': status}),
     );
     _checkResponse(response);

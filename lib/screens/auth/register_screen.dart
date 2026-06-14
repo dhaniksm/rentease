@@ -94,95 +94,139 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final authProvider = context.watch<AuthProvider>();
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.maroon,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(24, 30, 24, 24),
-              decoration: BoxDecoration(
-                color: AppColors.maroon,
-                borderRadius: BorderRadius.circular(34),
-              ),
+        bottom: false,
+        child: Column(
+          children: [
+            // Header Section
+            Padding(
+              padding: const EdgeInsets.only(top: 10, bottom: 40),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const AppLogo(),
-                  const SizedBox(height: 34),
-                  RentEaseTextField(
-                    controller: fullNameController,
-                    hintText: 'Nama Lengkap',
-                    icon: Icons.person,
-                    color: AppColors.white,
+                  const AppLogo(color: AppColors.white),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Buat Akun Baru',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.0,
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  RentEaseTextField(
-                    controller: emailController,
-                    hintText: 'Email',
-                    icon: Icons.email,
-                    keyboardType: TextInputType.emailAddress,
-                    color: AppColors.white,
-                  ),
-                  const SizedBox(height: 20),
-                  RentEaseTextField(
-                    controller: phoneController,
-                    hintText: 'Nomor Telepon',
-                    icon: Icons.phone,
-                    keyboardType: TextInputType.phone,
-                    color: AppColors.white,
-                  ),
-                  const SizedBox(height: 20),
-                  RentEaseTextField(
-                    controller: passwordController,
-                    hintText: 'Kata Sandi',
-                    icon: Icons.lock_outline,
-                    obscureText: true,
-                    color: AppColors.white,
-                  ),
-                  const SizedBox(height: 20),
-                  RentEaseTextField(
-                    controller: confirmPasswordController,
-                    hintText: 'Konfirmasi Kata Sandi',
-                    icon: Icons.lock_outline,
-                    obscureText: true,
-                    color: AppColors.white,
-                  ),
-                  const SizedBox(height: 30),
-                  PrimaryButton(
-                    text: 'REGISTER',
-                    isLoading: authProvider.isLoading,
-                    onPressed: register,
-                  ),
-                  const SizedBox(height: 30),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Sudah Punya Akun?',
-                        style: TextStyle(
-                          color: AppColors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text(
-                          'Login',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 8),
+                  Text(
+                    'Lengkapi data di bawah untuk bergabung',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.white.withValues(alpha: 0.8),
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
+            // Form Section
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+                decoration: const BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(40),
+                    topRight: Radius.circular(40),
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      RentEaseTextField(
+                        controller: fullNameController,
+                        hintText: 'Nama Lengkap',
+                        icon: Icons.person,
+                        color: AppColors.maroon,
+                      ),
+                      const SizedBox(height: 20),
+                      RentEaseTextField(
+                        controller: emailController,
+                        hintText: 'Email',
+                        icon: Icons.email,
+                        keyboardType: TextInputType.emailAddress,
+                        color: AppColors.maroon,
+                      ),
+                      const SizedBox(height: 20),
+                      RentEaseTextField(
+                        controller: phoneController,
+                        hintText: 'Nomor Telepon',
+                        icon: Icons.phone,
+                        keyboardType: TextInputType.phone,
+                        color: AppColors.maroon,
+                      ),
+                      const SizedBox(height: 20),
+                      RentEaseTextField(
+                        controller: passwordController,
+                        hintText: 'Kata Sandi',
+                        icon: Icons.lock_outline,
+                        obscureText: true,
+                        color: AppColors.maroon,
+                      ),
+                      const SizedBox(height: 20),
+                      RentEaseTextField(
+                        controller: confirmPasswordController,
+                        hintText: 'Konfirmasi Kata Sandi',
+                        icon: Icons.lock_outline,
+                        obscureText: true,
+                        color: AppColors.maroon,
+                      ),
+                      const SizedBox(height: 40),
+                      PrimaryButton(
+                        text: 'REGISTER',
+                        isLoading: authProvider.isLoading,
+                        onPressed: register,
+                      ),
+                      const SizedBox(height: 30),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Sudah Punya Akun?',
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: const Text(
+                              'Masuk',
+                              style: TextStyle(
+                                color: AppColors.maroon,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

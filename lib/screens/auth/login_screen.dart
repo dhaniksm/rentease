@@ -89,87 +89,126 @@ class _LoginScreenState extends State<LoginScreen> {
     final authProvider = context.watch<AuthProvider>();
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.maroon,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
-              decoration: BoxDecoration(
-                color: AppColors.maroon,
-                borderRadius: BorderRadius.circular(34),
-              ),
+        bottom: false, // Let the white container flow to the bottom
+        child: Column(
+          children: [
+            // Header Section
+            Padding(
+              padding: const EdgeInsets.only(top: 60, bottom: 40),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const AppLogo(),
-                  const SizedBox(height: 54),
-                  RentEaseTextField(
-                    controller: emailController,
-                    hintText: 'Email',
-                    icon: Icons.email,
-                    keyboardType: TextInputType.emailAddress,
-                    color: AppColors.white,
-                  ),
-                  const SizedBox(height: 14),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      'Lupa Kata Sandi?',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: AppColors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  const AppLogo(color: AppColors.white),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Selamat Datang Kembali!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.0,
                     ),
                   ),
-                  RentEaseTextField(
-                    controller: passwordController,
-                    hintText: 'Kata Sandi',
-                    icon: Icons.lock_outline,
-                    obscureText: true,
-                    color: AppColors.white,
-                  ),
-                  const SizedBox(height: 32),
-                  PrimaryButton(
-                    text: 'LOGIN',
-                    isLoading: authProvider.isLoading,
-                    onPressed: login,
-                  ),
-                  const SizedBox(height: 40),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Belum Punya Akun?',
-                        style: TextStyle(
-                          color: AppColors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const RegisterScreen(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          'Register',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 8),
+                  Text(
+                    'Masuk untuk melanjutkan sewa kendaraan Anda',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.white.withValues(alpha: 0.8),
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
+            // Form Section
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+                decoration: const BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(40),
+                    topRight: Radius.circular(40),
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      RentEaseTextField(
+                        controller: emailController,
+                        hintText: 'Email',
+                        icon: Icons.email,
+                        keyboardType: TextInputType.emailAddress,
+                        color: AppColors.maroon,
+                      ),
+                      const SizedBox(height: 20),
+                      RentEaseTextField(
+                        controller: passwordController,
+                        hintText: 'Kata Sandi',
+                        icon: Icons.lock_outline,
+                        obscureText: true,
+                        color: AppColors.maroon,
+                      ),
+                      // const SizedBox(height: 12),
+                      // Align(
+                      //   alignment: Alignment.centerRight,
+                      //   child: TextButton(
+                      //     onPressed: () {},
+                      //     child: Text(
+                      //       'Lupa Kata Sandi?',
+                      //       style: TextStyle(
+                      //         color: AppColors.maroon.withValues(alpha: 0.8),
+                      //         fontWeight: FontWeight.bold,
+                      //       ),
+                      //     ),
+                      //   ),
+                      ),
+                      const SizedBox(height: 32),
+                      PrimaryButton(
+                        text: 'LOGIN',
+                        isLoading: authProvider.isLoading,
+                        onPressed: login,
+                      ),
+                      const SizedBox(height: 40),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Belum Punya Akun?',
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const RegisterScreen(),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              'Daftar Sekarang',
+                              style: TextStyle(
+                                color: AppColors.maroon,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

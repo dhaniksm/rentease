@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:rentease/providers/auth_provider.dart';
 import 'package:rentease/providers/profile_provider.dart';
 import 'package:rentease/screens/auth/login_screen.dart';
-import 'package:rentease/screens/admin/admin_payment_screen.dart';
 import 'package:rentease/utils/app_colors.dart';
 import 'package:rentease/widgets/primary_button.dart';
 
@@ -18,7 +17,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => context.read<ProfileProvider>().loadProfile());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProfileProvider>().loadProfile();
+    });
   }
 
   Future<void> logout() async {
@@ -38,102 +39,178 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final profile = profileProvider.profile;
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.maroon,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SafeArea(
-        child: Center(
-          child: Container(
-            width: MediaQuery.of(context).size.width - 80,
-            padding: const EdgeInsets.fromLTRB(46, 72, 46, 70),
-            decoration: BoxDecoration(
-              color: AppColors.maroon,
-              borderRadius: BorderRadius.circular(34),
-            ),
-            child: profileProvider.isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: AppColors.white),
-                  )
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircleAvatar(
-                        radius: 42,
-                        backgroundColor: AppColors.white,
-                        backgroundImage: profile?.avatarUrl == null
-                            ? null
-                            : NetworkImage(profile!.avatarUrl!),
-                        child: profile?.avatarUrl == null
-                            ? const Icon(
-                                Icons.person,
-                                color: AppColors.maroon,
-                                size: 54,
-                              )
-                            : null,
-                      ),
-                      const SizedBox(height: 66),
-                      _ProfileText(
-                        text: profile?.fullName.isNotEmpty == true
-                            ? profile!.fullName
-                            : 'Nama User',
-                      ),
-                      const SizedBox(height: 22),
-                      _ProfileText(
-                        text: profile?.phoneNumber.isNotEmpty == true
-                            ? profile!.phoneNumber
-                            : 'Nomor Telepon',
-                      ),
-                      const SizedBox(height: 22),
-                      _ProfileText(
-                        text: profile?.email.isNotEmpty == true
-                            ? profile!.email
-                            : 'Email',
-                      ),
-                      if (profile?.role == 'admin') ...[
-                        const SizedBox(height: 22),
-                        PrimaryButton(
-                          text: 'ADMIN PAYMENT',
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const AdminPaymentScreen(),
-                              ),
-                            );
-                          },
+        bottom: false,
+        child: profileProvider.isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: AppColors.white),
+              )
+            : Column(
+                children: [
+                  // Header Section (Avatar and Name)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10, bottom: 40),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: AppColors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: CircleAvatar(
+                            radius: 54,
+                            backgroundColor: AppColors.maroon.withValues(alpha: 0.1),
+                            backgroundImage: profile?.avatarUrl == null
+                                ? null
+                                : NetworkImage(profile!.avatarUrl!),
+                            child: profile?.avatarUrl == null
+                                ? const Icon(
+                                    Icons.person,
+                                    color: AppColors.maroon,
+                                    size: 64,
+                                  )
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          profile?.fullName.isNotEmpty == true
+                              ? profile!.fullName
+                              : 'Nama Lengkap',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: AppColors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          profile?.role == 'admin' ? 'Administrator' : 'Pelanggan',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.white.withValues(alpha: 0.8),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
-                      const SizedBox(height: 70),
-                      PrimaryButton(text: 'LOGOUT', onPressed: logout),
-                    ],
+                    ),
                   ),
-          ),
-        ),
+                  // Details Section
+                  Expanded(
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+                      decoration: const BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(40),
+                          topRight: Radius.circular(40),
+                        ),
+                      ),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Text(
+                              'Informasi Kontak',
+                              style: TextStyle(
+                                color: AppColors.maroon,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            _ProfileText(
+                              icon: Icons.phone,
+                              label: 'Nomor Telepon',
+                              text: profile?.phoneNumber.isNotEmpty == true
+                                  ? profile!.phoneNumber
+                                  : 'Belum diatur',
+                            ),
+                            const SizedBox(height: 20),
+                            _ProfileText(
+                              icon: Icons.email,
+                              label: 'Alamat Email',
+                              text: profile?.email.isNotEmpty == true
+                                  ? profile!.email
+                                  : 'Belum diatur',
+                            ),
+                            const SizedBox(height: 50),
+                            PrimaryButton(text: 'LOGOUT', onPressed: logout),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }
 }
 
 class _ProfileText extends StatelessWidget {
+  final IconData icon;
+  final String label;
   final String text;
 
-  const _ProfileText({required this.text});
+  const _ProfileText({
+    required this.icon,
+    required this.label,
+    required this.text,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.white, width: 2),
+        color: AppColors.maroon.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: AppColors.white,
-          fontWeight: FontWeight.bold,
-        ),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.maroon, size: 28),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  text,
+                  style: const TextStyle(
+                    color: AppColors.maroon,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

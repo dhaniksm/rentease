@@ -1,12 +1,10 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:rentease/models/vehicle_model.dart';
 import 'package:rentease/providers/vehicle_provider.dart';
 import 'package:rentease/utils/app_colors.dart';
-import 'package:rentease/widgets/main_app_bar.dart';
 import 'package:rentease/widgets/primary_button.dart';
 
 class VehicleFormScreen extends StatefulWidget {
@@ -71,6 +69,13 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
   }
 
   Future<void> saveVehicle() async {
+    if (nameController.text.trim().isEmpty || brandController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nama dan Merk kendaraan wajib diisi')),
+      );
+      return;
+    }
+
     final price = int.tryParse(priceController.text.replaceAll('.', '')) ?? 0;
 
     final vehicle = VehicleModel(
@@ -116,165 +121,320 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
   @override
   Widget build(BuildContext context) {
     final isEdit = editedVehicle != null;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      appBar: MainAppBar(title: isEdit ? 'Edit Kendaraan' : 'Daftar Kendaraan'),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(34, 34, 34, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GestureDetector(
+      backgroundColor: AppColors.maroon,
+      body: Stack(
+        children: [
+          // IMAGE PICKER HEADER
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: screenHeight * 0.4,
+            child: GestureDetector(
               onTap: pickImage,
-              child: Container(
-                height: 262,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.maroon, width: 2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: selectedImage != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.file(selectedImage!, fit: BoxFit.cover),
-                      )
-                    : editedVehicle?.imageUrl != null &&
-                          editedVehicle!.imageUrl!.isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          editedVehicle!.imageUrl!,
-                          fit: BoxFit.cover,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (selectedImage != null)
+                    Image.file(selectedImage!, fit: BoxFit.cover)
+                  else if (editedVehicle?.imageUrl != null && editedVehicle!.imageUrl!.isNotEmpty)
+                    Image.network(editedVehicle!.imageUrl!, fit: BoxFit.cover)
+                  else
+                    Container(
+                      color: AppColors.maroon,
+                      child: const Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.camera_alt_outlined, color: Colors.white54, size: 64),
+                            SizedBox(height: 8),
+                            Text(
+                              'Tap untuk tambah foto',
+                              style: TextStyle(color: Colors.white54, fontWeight: FontWeight.bold),
+                            ),
+                          ],
                         ),
-                      )
-                    : const Icon(Icons.add, color: AppColors.maroon, size: 54),
+                      ),
+                    ),
+                  
+                  // Gradient Overlay so back button is visible
+                  Positioned(
+                    top: 0, left: 0, right: 0, height: 100,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.black54, Colors.transparent],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 18),
-            _Label('Nama Kendaraan'),
-            _Input(controller: nameController),
-            _Label('Merk'),
-            _Input(controller: brandController),
-            _Label('Plat Nomor'),
-            _Input(controller: plateController),
-            _Label('Nomor Rangka'),
-            _Input(controller: chassisController),
-            _Label('Jenis Kendaraan'),
-            DropdownButtonFormField<String>(
-              initialValue: vehicleType,
-              items: const [
-                DropdownMenuItem(value: 'MOTOR', child: Text('MOTOR')),
-                DropdownMenuItem(value: 'MOBIL', child: Text('MOBIL')),
+          ),
+
+          // BACK BUTTON & TITLE
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 10,
+            left: 10,
+            right: 10,
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                Expanded(
+                  child: Text(
+                    isEdit ? 'Edit Kendaraan' : 'Tambah Kendaraan',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      shadows: [Shadow(color: Colors.black45, blurRadius: 4)],
+                    ),
+                  ),
+                ),
               ],
-              onChanged: (value) =>
-                  setState(() => vehicleType = value ?? 'MOTOR'),
-              decoration: _inputDecoration(),
-              style: const TextStyle(
-                color: AppColors.maroon,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+            ),
+          ),
+
+          // WHITE BOTTOM SHEET FORM
+          Positioned(
+            top: screenHeight * 0.35,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(32),
+                  topRight: Radius.circular(32),
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(32),
+                  topRight: Radius.circular(32),
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 40),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionTitle('Informasi Utama'),
+                      _buildInputGroup(
+                        label: 'Nama Kendaraan',
+                        icon: Icons.directions_car_outlined,
+                        controller: nameController,
+                        hint: 'Contoh: Avanza Veloz',
+                      ),
+                      _buildInputGroup(
+                        label: 'Merk',
+                        icon: Icons.branding_watermark_outlined,
+                        controller: brandController,
+                        hint: 'Contoh: Toyota',
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      _buildSectionTitle('Detail Tipe & Harga'),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildDropdownGroup(
+                              label: 'Jenis',
+                              icon: Icons.category_outlined,
+                              value: vehicleType,
+                              items: ['MOTOR', 'MOBIL'],
+                              onChanged: (val) => setState(() => vehicleType = val ?? 'MOTOR'),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildDropdownGroup(
+                              label: 'Status',
+                              icon: Icons.info_outline,
+                              value: status,
+                              items: ['available', 'rented', 'maintenance'],
+                              displayItems: ['Tersedia', 'Disewa', 'Perbaikan'],
+                              onChanged: (val) => setState(() => status = val ?? 'available'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildInputGroup(
+                        label: 'Harga Peminjaman (per hari)',
+                        icon: Icons.attach_money,
+                        controller: priceController,
+                        hint: 'Contoh: 300000',
+                        keyboardType: TextInputType.number,
+                      ),
+
+                      const SizedBox(height: 24),
+                      _buildSectionTitle('Identitas Kendaraan'),
+                      _buildInputGroup(
+                        label: 'Plat Nomor',
+                        icon: Icons.pin_outlined,
+                        controller: plateController,
+                        hint: 'Contoh: B 1234 ABC',
+                      ),
+                      _buildInputGroup(
+                        label: 'Nomor Rangka',
+                        icon: Icons.numbers,
+                        controller: chassisController,
+                        hint: 'Opsional',
+                      ),
+                      _buildInputGroup(
+                        label: 'Deskripsi Tambahan',
+                        icon: Icons.description_outlined,
+                        controller: descriptionController,
+                        hint: 'Warna, tahun pembuatan, dll...',
+                        maxLines: 3,
+                      ),
+
+                      const SizedBox(height: 40),
+                      PrimaryButton(
+                        text: isEdit ? 'SIMPAN PERUBAHAN' : 'TAMBAH KENDARAAN',
+                        isLoading: isLoading,
+                        onPressed: saveVehicle,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-            _Label('Status'),
-            DropdownButtonFormField<String>(
-              initialValue: status,
-              items: const [
-                DropdownMenuItem(value: 'available', child: Text('available')),
-                DropdownMenuItem(value: 'rented', child: Text('rented')),
-              ],
-              onChanged: (value) =>
-                  setState(() => status = value ?? 'available'),
-              decoration: _inputDecoration(),
-              style: const TextStyle(
-                color: AppColors.maroon,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-            _Label('Harga Peminjaman /hari'),
-            _Input(
-              controller: priceController,
-              keyboardType: TextInputType.number,
-            ),
-            _Label('Deskripsi'),
-            _Input(controller: descriptionController),
-            const SizedBox(height: 14),
-            Center(
-              child: PrimaryButton(
-                text: isEdit ? 'SIMPAN' : 'TAMBAH',
-                isLoading: isLoading,
-                onPressed: saveVehicle,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  InputDecoration _inputDecoration() {
-    return InputDecoration(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(color: AppColors.maroon, width: 2),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(color: AppColors.maroon, width: 2),
-      ),
-    );
-  }
-}
-
-class _Label extends StatelessWidget {
-  final String text;
-
-  const _Label(this.text);
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8, left: 6, bottom: 4),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Text(
-        text,
+        title,
         style: const TextStyle(
           color: AppColors.maroon,
-          fontWeight: FontWeight.bold,
+          fontSize: 18,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.5,
         ),
       ),
     );
   }
-}
 
-class _Input extends StatelessWidget {
-  final TextEditingController controller;
-  final TextInputType keyboardType;
-
-  const _Input({
-    required this.controller,
-    this.keyboardType = TextInputType.text,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 10,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(11),
-          borderSide: const BorderSide(color: AppColors.maroon, width: 2),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(11),
-          borderSide: const BorderSide(color: AppColors.maroon, width: 2),
-        ),
+  Widget _buildInputGroup({
+    required String label,
+    required IconData icon,
+    required TextEditingController controller,
+    required String hint,
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: AppColors.maroon.withValues(alpha: 0.7),
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.maroon.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.maroon.withValues(alpha: 0.1)),
+            ),
+            child: TextField(
+              controller: controller,
+              keyboardType: keyboardType,
+              maxLines: maxLines,
+              style: const TextStyle(
+                color: AppColors.maroon,
+                fontWeight: FontWeight.w600,
+              ),
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: TextStyle(
+                  color: AppColors.maroon.withValues(alpha: 0.3),
+                  fontWeight: FontWeight.normal,
+                ),
+                prefixIcon: maxLines == 1 ? Icon(icon, color: AppColors.maroon.withValues(alpha: 0.5), size: 20) : null,
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: maxLines > 1 ? 16 : 14,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildDropdownGroup({
+    required String label,
+    required IconData icon,
+    required String value,
+    required List<String> items,
+    List<String>? displayItems,
+    required Function(String?) onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: AppColors.maroon.withValues(alpha: 0.7),
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: AppColors.maroon.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.maroon.withValues(alpha: 0.1)),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              isExpanded: true,
+              icon: Icon(Icons.keyboard_arrow_down, color: AppColors.maroon.withValues(alpha: 0.5)),
+              style: const TextStyle(
+                color: AppColors.maroon,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+              items: List.generate(items.length, (index) {
+                return DropdownMenuItem(
+                  value: items[index],
+                  child: Text(displayItems != null ? displayItems[index] : items[index]),
+                );
+              }),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -173,18 +173,12 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            backgroundColor: AppColors.maroon.withOpacity(0.1),
-            child: const Icon(Icons.admin_panel_settings, color: AppColors.maroon),
-          ),
-        ),
         title: const Text(
           'SCAN QR',
           style: TextStyle(
             color: AppColors.maroon,
             fontWeight: FontWeight.w900,
+            fontSize: 20,
             letterSpacing: 1.2,
           ),
         ),
@@ -213,7 +207,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                   width: 250,
                   height: 250,
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.white.withOpacity(0.5), width: 4),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 4),
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),

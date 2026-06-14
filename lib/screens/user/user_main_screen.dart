@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:rentease/screens/user/riwayat_user_screen.dart';
 import 'package:rentease/screens/user/pengembalian_user_screen.dart';
 import 'package:rentease/screens/admin/vehicle_screen.dart'; // We use VehicleScreen as home for User for now since it lists cars
+import 'package:rentease/screens/user/profile_screen.dart';
 import 'package:rentease/utils/app_colors.dart';
 
 class UserMainScreen extends StatefulWidget {
@@ -21,6 +22,7 @@ class _UserMainScreenState extends State<UserMainScreen> {
     VehicleScreen(),
     PengembalianUserScreen(),
     RiwayatUserScreen(),
+    ProfileScreen(),
   ];
 
   @override
@@ -74,6 +76,11 @@ class _UserMainScreenState extends State<UserMainScreen> {
             icon: Icon(Icons.history_outlined),
             activeIcon: Icon(Icons.history),
             label: 'RIWAYAT',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'PROFIL',
           ),
         ],
       ),

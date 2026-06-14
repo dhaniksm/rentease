@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rentease/models/vehicle_model.dart';
 import 'package:rentease/providers/vehicle_provider.dart';
+import 'package:rentease/providers/profile_provider.dart';
 import 'package:rentease/screens/user/vehicle_detail_screen.dart';
 import 'package:rentease/screens/admin/vehicle_form_screen.dart';
 import 'package:rentease/utils/app_colors.dart';
-import 'package:rentease/widgets/main_app_bar.dart';
+import 'package:rentease/screens/user/profile_screen.dart';
 import 'package:rentease/widgets/vehicle_card.dart';
 
 class VehicleScreen extends StatefulWidget {
@@ -22,7 +23,9 @@ class _VehicleScreenState extends State<VehicleScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => context.read<VehicleProvider>().loadVehicles());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<VehicleProvider>().loadVehicles();
+    });
   }
 
   @override
@@ -79,73 +82,97 @@ class _VehicleScreenState extends State<VehicleScreen> {
   @override
   Widget build(BuildContext context) {
     final vehicleProvider = context.watch<VehicleProvider>();
+    final profileProvider = context.watch<ProfileProvider>();
+    final isAdmin = profileProvider.profile?.role == 'admin';
     final vehicles = getFilteredVehicles(vehicleProvider.vehicles);
 
     return Scaffold(
-      appBar: const MainAppBar(title: 'Daftar Kendaraan'),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.maroon,
-        foregroundColor: AppColors.white,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const VehicleFormScreen()),
-          );
-        },
-        child: const Icon(Icons.add, size: 34),
+      backgroundColor: AppColors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text(
+          'KENDARAAN',
+          style: TextStyle(
+            color: AppColors.maroon,
+            fontWeight: FontWeight.w900,
+            fontSize: 20,
+            letterSpacing: 1.2,
+          ),
+        ),
+        centerTitle: true,
       ),
+      floatingActionButton: isAdmin
+          ? FloatingActionButton(
+              backgroundColor: AppColors.maroon,
+              foregroundColor: AppColors.white,
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const VehicleFormScreen()),
+                );
+              },
+              child: const Icon(Icons.add, size: 28),
+            )
+          : null,
       body: Padding(
-        padding: const EdgeInsets.fromLTRB(22, 18, 22, 12),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
         child: Column(
           children: [
             TextField(
               controller: searchController,
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
-                hintText: 'Cari',
+                hintText: 'Cari Kendaraan...',
+                filled: true,
+                fillColor: AppColors.maroon.withValues(alpha: 0.03),
                 prefixIcon: const Icon(Icons.search, color: AppColors.maroon),
-                hintStyle: const TextStyle(
-                  color: AppColors.maroon,
-                  fontWeight: FontWeight.bold,
+                hintStyle: TextStyle(
+                  color: AppColors.maroon.withValues(alpha: 0.5),
+                  fontWeight: FontWeight.w600,
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(
-                    color: AppColors.maroon,
-                    width: 2,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(
-                    color: AppColors.maroon,
-                    width: 2,
-                  ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: ['SEMUA', 'MOTOR', 'MOBIL'].map((type) {
-                final isSelected = selectedType == type;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: ChoiceChip(
-                    label: Text(type),
-                    selected: isSelected,
-                    onSelected: (_) => setState(() => selectedType = type),
-                    selectedColor: AppColors.maroon,
-                    backgroundColor: AppColors.white,
-                    labelStyle: TextStyle(
-                      color: isSelected ? AppColors.white : AppColors.maroon,
-                      fontWeight: FontWeight.bold,
+            const SizedBox(height: 16),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: ['SEMUA', 'MOTOR', 'MOBIL'].map((type) {
+                  final isSelected = selectedType == type;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: ChoiceChip(
+                      label: Text(type),
+                      selected: isSelected,
+                      onSelected: (_) => setState(() => selectedType = type),
+                      selectedColor: AppColors.maroon,
+                      backgroundColor: AppColors.white,
+                      labelStyle: TextStyle(
+                        color: isSelected ? AppColors.white : AppColors.maroon,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                          color: isSelected ? AppColors.maroon : AppColors.maroon.withValues(alpha: 0.2),
+                          width: 1.5,
+                        ),
+                      ),
                     ),
-                    side: const BorderSide(color: AppColors.maroon, width: 2),
-                  ),
-                );
-              }).toList(),
+                  );
+                }).toList(),
+              ),
             ),
-            const SizedBox(height: 26),
+            const SizedBox(height: 20),
             Expanded(
               child: vehicleProvider.isLoading
                   ? const Center(
@@ -178,16 +205,18 @@ class _VehicleScreenState extends State<VehicleScreen> {
                                       ),
                                     );
                                   },
-                                  onEdit: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const VehicleFormScreen(),
-                                        settings: RouteSettings(arguments: vehicle),
-                                      ),
-                                    );
-                                  },
-                                  onDelete: () => deleteVehicle(vehicle.id),
+                                  onEdit: isAdmin
+                                      ? () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => const VehicleFormScreen(),
+                                              settings: RouteSettings(arguments: vehicle),
+                                            ),
+                                          );
+                                        }
+                                      : null,
+                                  onDelete: isAdmin ? () => deleteVehicle(vehicle.id) : null,
                                 );
                               },
                             ),

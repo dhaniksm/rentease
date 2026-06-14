@@ -62,18 +62,12 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            backgroundColor: AppColors.maroon.withOpacity(0.1),
-            child: const Icon(Icons.admin_panel_settings, color: AppColors.maroon),
-          ),
-        ),
         title: const Text(
-          'MAP',
+          'PELACAK LOKASI',
           style: TextStyle(
             color: AppColors.maroon,
             fontWeight: FontWeight.w900,
+            fontSize: 20,
             letterSpacing: 1.2,
           ),
         ),
@@ -100,10 +94,10 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.maroon.withOpacity(0.2), width: 1),
+                      border: Border.all(color: AppColors.maroon.withValues(alpha: 0.2), width: 1),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.maroon.withOpacity(0.05),
+                          color: AppColors.maroon.withValues(alpha: 0.05),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -137,7 +131,7 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
                           image: AssetImage('assets/images/dark_map.png'),
                           fit: BoxFit.cover,
                         ),
-                        border: Border.all(color: AppColors.maroon.withOpacity(0.5), width: 2),
+                        border: Border.all(color: AppColors.maroon.withValues(alpha: 0.5), width: 2),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Stack(
@@ -245,7 +239,7 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
               Text(
                 'Terhubung GPS Tracker via Vercel',
                 style: TextStyle(
-                  color: AppColors.maroon.withOpacity(0.7),
+                  color: AppColors.maroon.withValues(alpha: 0.7),
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                 ),
@@ -300,7 +294,7 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
           ? BoxDecoration(
               boxShadow: [
                 BoxShadow(
-                  color: color.withOpacity(0.6),
+                  color: color.withValues(alpha: 0.6),
                   blurRadius: 15,
                   spreadRadius: 5,
                 ),

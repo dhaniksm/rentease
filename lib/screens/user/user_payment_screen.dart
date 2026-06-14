@@ -1,10 +1,10 @@
 import 'package:rentease/providers/payment_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:rentease/providers/profile_provider.dart';
 import 'package:rentease/utils/app_colors.dart';
 import 'package:rentease/utils/formatters.dart';
+import 'package:rentease/widgets/primary_button.dart';
 
 class UserRentalModel {
   final String id;
@@ -66,7 +66,9 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchMyRentals();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchMyRentals();
+    });
   }
 
   Future<void> _fetchMyRentals() async {
@@ -78,6 +80,7 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
     final currentUserId = profileProvider.profile?.id;
     if (currentUserId == null) return;
 
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
     });
@@ -90,6 +93,7 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
           .map((json) => UserRentalModel.fromJson(json))
           .toList();
 
+      if (!mounted) return;
       setState(() {
         _myRentals = allRentals
             .where((r) => r.userId == currentUserId)
@@ -100,8 +104,10 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
         }
       });
     } catch (e) {
+      if (!mounted) return;
       _useMockFallback(currentUserId);
     } finally {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
@@ -137,7 +143,7 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
 
       _showSnackBar(
         'Konfirmasi pembayaran terkirim! Menunggu verifikasi admin.',
-        Colors.green,
+        Colors.green.shade700,
       );
       _fetchMyRentals();
     } catch (e) {
@@ -160,7 +166,7 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
             );
           }
         });
-        _showSnackBar('Konfirmasi pembayaran (MOCK) terkirim!', Colors.green);
+        _showSnackBar('Konfirmasi pembayaran (MOCK) terkirim!', Colors.green.shade700);
       } else {
         _showSnackBar('Koneksi internet bermasalah.', AppColors.maroon);
       }
@@ -174,8 +180,10 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
   void _showSnackBar(String msg, Color bg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(msg, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         backgroundColor: bg,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -187,18 +195,8 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
       final end = start.add(Duration(days: totalDays - 1));
 
       final months = [
-        'Januari',
-        'Februari',
-        'Maret',
-        'April',
-        'Mei',
-        'Juni',
-        'Juli',
-        'Agustus',
-        'September',
-        'Oktober',
-        'November',
-        'Desember',
+        'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+        'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'
       ];
 
       final startDay = start.day;
@@ -224,21 +222,21 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
 
   String _getStatusText(String? status) {
     if (status == 'paid' || status == 'active' || status == 'returned') {
-      return 'Sudah Dibayar';
+      return 'LUNAS';
     } else if (status == 'pending_verification') {
-      return 'Menunggu Verifikasi';
+      return 'MENUNGGU VERIFIKASI';
     } else {
-      return 'Menunggu';
+      return 'BELUM DIBAYAR';
     }
   }
 
   Color _getStatusColor(String? status) {
     if (status == 'paid' || status == 'active' || status == 'returned') {
-      return const Color(0xFF2E7D32); // Green
+      return Colors.green.shade600;
     } else if (status == 'pending_verification') {
-      return const Color(0xFFEF6C00); // Orange
+      return Colors.orange.shade600;
     } else {
-      return const Color(0xFFC62828); // Red
+      return AppColors.maroon;
     }
   }
 
@@ -246,262 +244,254 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Custom App Bar exactly matching Figma mockup style
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Back button with circular/rounded container
-                  GestureDetector(
-                    onTap: () {
-                      // Navigate back or switch tab to Home (index 0)
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.maroon.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        color: AppColors.maroon,
-                        size: 24,
-                      ),
+      appBar: AppBar(
+        backgroundColor: AppColors.white,
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          'PEMBAYARAN',
+          style: TextStyle(
+            color: AppColors.maroon,
+            fontWeight: FontWeight.w900,
+            fontSize: 20,
+            letterSpacing: 1.2,
+          ),
+        ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _fetchMyRentals,
+              color: AppColors.maroon,
+              child: _isLoading && _myRentals.isEmpty
+                  ? const Center(
+                      child: CircularProgressIndicator(color: AppColors.maroon),
+                    )
+                  : _myRentals.isEmpty
+                  ? ListView(
+                      children: [
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+                        const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey),
+                              SizedBox(height: 16),
+                              Text(
+                                'Belum ada transaksi pembayaran.',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      itemCount: _myRentals.length,
+                      itemBuilder: (context, index) {
+                        final rental = _myRentals[index];
+                        final isSelected = index == _selectedCardIndex;
+                        final statusColor = _getStatusColor(rental.rentalStatus);
+
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedCardIndex = index;
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.only(bottom: 20),
+                            decoration: BoxDecoration(
+                              color: AppColors.white,
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: isSelected 
+                                    ? AppColors.maroon 
+                                    : AppColors.maroon.withValues(alpha: 0.1),
+                                width: isSelected ? 2 : 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: isSelected 
+                                      ? AppColors.maroon.withValues(alpha: 0.15)
+                                      : AppColors.maroon.withValues(alpha: 0.05),
+                                  blurRadius: isSelected ? 20 : 10,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Top Section
+                                Padding(
+                                  padding: const EdgeInsets.all(20),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Status Dot & Dates
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: statusColor.withValues(alpha: 0.1),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Container(
+                                                    width: 6,
+                                                    height: 6,
+                                                    decoration: BoxDecoration(
+                                                      color: statusColor,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  Text(
+                                                    _getStatusText(rental.rentalStatus),
+                                                    style: TextStyle(
+                                                      color: statusColor,
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(height: 12),
+                                            Text(
+                                              '${rental.vehicleName?.toUpperCase()} - ${rental.plateNumber}',
+                                              style: const TextStyle(
+                                                color: AppColors.maroon,
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 18,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                Icon(Icons.calendar_month_outlined, size: 14, color: AppColors.maroon.withValues(alpha: 0.5)),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  _formatDateRange(rental.startDate, rental.totalDays),
+                                                  style: TextStyle(
+                                                    color: AppColors.maroon.withValues(alpha: 0.7),
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Bottom Section (Price & Duration)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.maroon.withValues(alpha: 0.04),
+                                    borderRadius: const BorderRadius.only(
+                                      bottomLeft: Radius.circular(22),
+                                      bottomRight: Radius.circular(22),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Durasi Sewa',
+                                            style: TextStyle(
+                                              color: AppColors.maroon.withValues(alpha: 0.5),
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '${rental.totalDays} Hari',
+                                            style: const TextStyle(
+                                              color: AppColors.maroon,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            'Total Tagihan',
+                                            style: TextStyle(
+                                              color: AppColors.maroon.withValues(alpha: 0.5),
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            Formatters.rupiah(rental.totalPrice),
+                                            style: const TextStyle(
+                                              color: AppColors.maroon,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  ),
-                  const Text(
-                    'PEMBAYARAN',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.maroon,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  // Heart icon with circular/rounded container
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.maroon.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.favorite_border,
-                      color: AppColors.maroon,
-                      size: 24,
-                    ),
+            ),
+          ),
+
+          // BOTTOM ACTION BAR
+          if (_myRentals.isNotEmpty)
+            Container(
+              padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).padding.bottom + 16),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -5),
                   ),
                 ],
               ),
-            ),
-
-            // Main maroon card area
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _fetchMyRentals,
-                color: AppColors.maroon,
-                child: _isLoading && _myRentals.isEmpty
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.maroon,
-                        ),
-                      )
-                    : _myRentals.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Belum ada transaksi pembayaran.',
-                          style: TextStyle(
-                            color: AppColors.maroon,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      )
-                    : Container(
-                        margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.white, // Light theme background
-                          borderRadius: BorderRadius.circular(28),
-                          border: Border.all(color: AppColors.maroon.withOpacity(0.2), width: 1.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.maroon.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: ListView.builder(
-                          padding: const EdgeInsets.all(20),
-                          itemCount: _myRentals.length,
-                          itemBuilder: (context, index) {
-                            final rental = _myRentals[index];
-                            final isSelected = index == _selectedCardIndex;
-
-                            return GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _selectedCardIndex = index;
-                                });
-                              },
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Vehicle Header Text
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 8,
-                                      bottom: 8,
-                                    ),
-                                    child: Text(
-                                      '${rental.vehicleName?.toUpperCase()} - ${rental.plateNumber}',
-                                      style: const TextStyle(
-                                        color: AppColors.maroon,
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 22,
-                                        letterSpacing: 0.8,
-                                      ),
-                                    ),
-                                  ),
-                                  // Inner White Details Box matching mockup exactly
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(22),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.maroon.withOpacity(0.05),
-                                      borderRadius: BorderRadius.circular(24),
-                                      border: Border.all(
-                                              color: isSelected ? AppColors.maroon : AppColors.maroon.withOpacity(0.2),
-                                              width: isSelected ? 3 : 1.5,
-                                            ),
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            // Duration (e.g. "3 Hari")
-                                            Text(
-                                              '${rental.totalDays} Hari',
-                                              style: const TextStyle(
-                                                color: AppColors.maroon,
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w900,
-                                              ),
-                                            ),
-                                            // Price
-                                            Text(
-                                              Formatters.rupiah(
-                                                rental.totalPrice,
-                                              ),
-                                              style: const TextStyle(
-                                                color: AppColors.maroon,
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w900,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            // Date range (e.g. "21 - 23 Mei 2025")
-                                            Text(
-                                              _formatDateRange(
-                                                rental.startDate,
-                                                rental.totalDays,
-                                              ),
-                                              style: const TextStyle(
-                                                color: AppColors.maroon,
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            // Status
-                                            Text(
-                                              _getStatusText(
-                                                rental.rentalStatus,
-                                              ),
-                                              style: TextStyle(
-                                                color: _getStatusColor(
-                                                  rental.rentalStatus,
-                                                ),
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w900,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 24),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
+              child: PrimaryButton(
+                text: 'KONFIRMASI PEMBAYARAN',
+                isLoading: _isLoading,
+                onPressed: _myRentals[_selectedCardIndex].rentalStatus != 'unpaid'
+                    ? null
+                    : () => _confirmPayment(_myRentals[_selectedCardIndex].id),
               ),
             ),
-
-            // Bottom bar with dynamic confirmation action button
-            if (_myRentals.isNotEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 18,
-                ),
-                color: Colors.white,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    ElevatedButton(
-                      onPressed:
-                          _isLoading ||
-                              _myRentals[_selectedCardIndex].rentalStatus !=
-                                  'unpaid'
-                          ? null
-                          : () {
-                              _confirmPayment(
-                                _myRentals[_selectedCardIndex].id,
-                              );
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.maroon,
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor: Colors.grey.shade600,
-                        disabledForegroundColor: Colors.white70,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 36,
-                          vertical: 14,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Konfirmasi',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }

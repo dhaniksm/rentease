@@ -13,12 +13,12 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: AppColors.maroon,
-      foregroundColor: AppColors.white,
+      backgroundColor: AppColors.white,
+      foregroundColor: AppColors.maroon,
       elevation: 0,
       toolbarHeight: 76,
       leading: Padding(
-        padding: const EdgeInsets.only(left: 12),
+        padding: const EdgeInsets.only(left: 16, top: 12, bottom: 12),
         child: GestureDetector(
           onTap: () {
             Navigator.push(
@@ -26,15 +26,27 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
               MaterialPageRoute(builder: (context) => const ProfileScreen()),
             );
           },
-          child: const CircleAvatar(
-            backgroundColor: AppColors.white,
-            child: Icon(Icons.person, color: AppColors.maroon),
+          child: CircleAvatar(
+            backgroundColor: AppColors.maroon.withValues(alpha: 0.1),
+            child: const Icon(Icons.person, color: AppColors.maroon),
           ),
         ),
       ),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+      title: Text(
+        title.toUpperCase(),
+        style: const TextStyle(
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.2,
+          color: AppColors.maroon,
+        ),
+      ),
       centerTitle: true,
-      actions: const [Icon(Icons.menu, size: 34), SizedBox(width: 16)],
+      actions: const [
+        Padding(
+          padding: EdgeInsets.only(right: 16),
+          child: Icon(Icons.menu, size: 28, color: AppColors.maroon),
+        ),
+      ],
     );
   }
 }
