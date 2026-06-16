@@ -6,7 +6,6 @@ import 'package:rentease/providers/profile_provider.dart';
 import 'package:rentease/screens/user/vehicle_detail_screen.dart';
 import 'package:rentease/screens/admin/vehicle_form_screen.dart';
 import 'package:rentease/utils/app_colors.dart';
-import 'package:rentease/screens/user/profile_screen.dart';
 import 'package:rentease/widgets/vehicle_card.dart';
 
 class VehicleScreen extends StatefulWidget {
@@ -35,12 +34,22 @@ class _VehicleScreenState extends State<VehicleScreen> {
   }
 
   List<VehicleModel> getFilteredVehicles(List<VehicleModel> vehicles) {
-    final keyword = searchController.text.toLowerCase();
+    final keyword = searchController.text.trim().toLowerCase();
 
     return vehicles.where((vehicle) {
-      final matchType =
-          selectedType == 'SEMUA' ||
-          vehicle.vehicleType.toLowerCase() == selectedType.toLowerCase();
+      final vType = vehicle.vehicleType.trim().toLowerCase();
+      final isMotor = vType == 'motor' || vType == 'motorcycle' || vType == 'sepeda motor';
+      final isMobil = vType == 'mobil' || vType == 'car' || vType == 'mpv' || vType == 'hatchback' || vType == 'suv';
+      
+      bool matchType = false;
+      if (selectedType == 'SEMUA') {
+        matchType = true;
+      } else if (selectedType == 'MOTOR') {
+        matchType = isMotor;
+      } else if (selectedType == 'MOBIL') {
+        matchType = isMobil || (!isMotor && vType != ''); 
+      }
+
       final matchSearch =
           vehicle.vehicleName.toLowerCase().contains(keyword) ||
           vehicle.brand.toLowerCase().contains(keyword);
@@ -113,7 +122,9 @@ class _VehicleScreenState extends State<VehicleScreen> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const VehicleFormScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const VehicleFormScreen(),
+                  ),
                 );
               },
               child: const Icon(Icons.add, size: 28),
@@ -163,7 +174,9 @@ class _VehicleScreenState extends State<VehicleScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                         side: BorderSide(
-                          color: isSelected ? AppColors.maroon : AppColors.maroon.withValues(alpha: 0.2),
+                          color: isSelected
+                              ? AppColors.maroon
+                              : AppColors.maroon.withValues(alpha: 0.2),
                           width: 1.5,
                         ),
                       ),
@@ -200,8 +213,11 @@ class _VehicleScreenState extends State<VehicleScreen> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => const VehicleDetailScreen(),
-                                        settings: RouteSettings(arguments: vehicle),
+                                        builder: (context) =>
+                                            const VehicleDetailScreen(),
+                                        settings: RouteSettings(
+                                          arguments: vehicle,
+                                        ),
                                       ),
                                     );
                                   },
@@ -210,13 +226,18 @@ class _VehicleScreenState extends State<VehicleScreen> {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) => const VehicleFormScreen(),
-                                              settings: RouteSettings(arguments: vehicle),
+                                              builder: (context) =>
+                                                  const VehicleFormScreen(),
+                                              settings: RouteSettings(
+                                                arguments: vehicle,
+                                              ),
                                             ),
                                           );
                                         }
                                       : null,
-                                  onDelete: isAdmin ? () => deleteVehicle(vehicle.id) : null,
+                                  onDelete: isAdmin
+                                      ? () => deleteVehicle(vehicle.id)
+                                      : null,
                                 );
                               },
                             ),

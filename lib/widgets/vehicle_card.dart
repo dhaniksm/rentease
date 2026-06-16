@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:rentease/models/vehicle_model.dart';
 import 'package:rentease/utils/app_colors.dart';
 import 'package:rentease/utils/formatters.dart';
+import 'package:provider/provider.dart';
+import 'package:rentease/providers/favorite_provider.dart';
 
 class VehicleCard extends StatelessWidget {
   final VehicleModel vehicle;
@@ -88,10 +90,7 @@ class VehicleCard extends StatelessWidget {
                           ),
                         )
                       else
-                        Image.network(
-                          vehicle.imageUrl!,
-                          fit: BoxFit.cover,
-                        ),
+                        Image.network(vehicle.imageUrl!, fit: BoxFit.cover),
 
                       // Gradient Overlay for text readability
                       Positioned.fill(
@@ -110,12 +109,49 @@ class VehicleCard extends StatelessWidget {
                         ),
                       ),
 
+                      // Favorite Button
+                      Positioned(
+                        top: 12,
+                        left: 12,
+                        child: Consumer<FavoriteProvider>(
+                          builder: (context, favoriteProvider, child) {
+                            final isFav = favoriteProvider.isFavorite(vehicle.id);
+                            return GestureDetector(
+                              onTap: () {
+                                favoriteProvider.toggleFavorite(vehicle.id);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(isFav ? 'Dihapus dari Favorit' : 'Disimpan ke Favorit'),
+                                    duration: const Duration(seconds: 1),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  isFav ? Icons.favorite : Icons.favorite_border,
+                                  color: isFav ? Colors.red : Colors.grey,
+                                  size: 20,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
                       // Status Badge
                       Positioned(
                         top: 16,
                         right: 16,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: statusColor,
                             borderRadius: BorderRadius.circular(20),
@@ -124,7 +160,7 @@ class VehicleCard extends StatelessWidget {
                                 color: Colors.black.withValues(alpha: 0.2),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
-                              )
+                              ),
                             ],
                           ),
                           child: Row(
@@ -162,7 +198,9 @@ class VehicleCard extends StatelessWidget {
                               _buildAdminButton(
                                 icon: Icons.edit,
                                 color: Colors.white,
-                                bgColor: AppColors.maroon.withValues(alpha: 0.8),
+                                bgColor: AppColors.maroon.withValues(
+                                  alpha: 0.8,
+                                ),
                                 onTap: onEdit!,
                               ),
                               const SizedBox(width: 8),
@@ -215,17 +253,38 @@ class VehicleCard extends StatelessWidget {
                             Row(
                               children: [
                                 Icon(
-                                  vehicle.vehicleType.toLowerCase() == 'motor' 
-                                      ? Icons.two_wheeler 
+                                  vehicle.vehicleType.toLowerCase() == 'motor'
+                                      ? Icons.two_wheeler
                                       : Icons.directions_car,
                                   size: 16,
-                                  color: AppColors.maroon.withValues(alpha: 0.6),
+                                  color: AppColors.maroon.withValues(
+                                    alpha: 0.6,
+                                  ),
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   vehicle.vehicleType.toUpperCase(),
                                   style: TextStyle(
-                                    color: AppColors.maroon.withValues(alpha: 0.7),
+                                    color: AppColors.maroon.withValues(
+                                      alpha: 0.7,
+                                    ),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Icon(
+                                  Icons.star,
+                                  size: 16,
+                                  color: Colors.amber,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  vehicle.rating > 0 ? vehicle.rating.toStringAsFixed(1) : 'Baru',
+                                  style: TextStyle(
+                                    color: AppColors.maroon.withValues(
+                                      alpha: 0.7,
+                                    ),
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -264,7 +323,9 @@ class VehicleCard extends StatelessWidget {
                               Text(
                                 '/hr',
                                 style: TextStyle(
-                                  color: AppColors.maroon.withValues(alpha: 0.6),
+                                  color: AppColors.maroon.withValues(
+                                    alpha: 0.6,
+                                  ),
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -302,7 +363,7 @@ class VehicleCard extends StatelessWidget {
               color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 4,
               offset: const Offset(0, 2),
-            )
+            ),
           ],
         ),
         child: Icon(icon, color: color, size: 18),

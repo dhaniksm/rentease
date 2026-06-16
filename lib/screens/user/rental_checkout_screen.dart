@@ -4,6 +4,7 @@ import 'package:rentease/models/vehicle_model.dart';
 import 'package:rentease/models/rental_model.dart';
 import 'package:rentease/providers/profile_provider.dart';
 import 'package:rentease/providers/rental_provider.dart';
+import 'package:rentease/providers/vehicle_provider.dart';
 import 'package:rentease/utils/app_colors.dart';
 import 'package:rentease/utils/formatters.dart';
 import 'package:rentease/widgets/primary_button.dart';
@@ -33,11 +34,13 @@ class _RentalCheckoutScreenState extends State<RentalCheckoutScreen> {
   }
 
   Future<void> _selectDate(BuildContext context, bool isStart) async {
-    final DateTime initialDate = isStart 
-        ? (startDate ?? DateTime.now()) 
+    final DateTime initialDate = isStart
+        ? (startDate ?? DateTime.now())
         : (endDate ?? startDate ?? DateTime.now());
-        
-    final DateTime firstDate = isStart ? DateTime.now() : (startDate ?? DateTime.now());
+
+    final DateTime firstDate = isStart
+        ? DateTime.now()
+        : (startDate ?? DateTime.now());
 
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -75,7 +78,9 @@ class _RentalCheckoutScreenState extends State<RentalCheckoutScreen> {
   Future<void> _processCheckout(VehicleModel vehicle) async {
     if (startDate == null || endDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Silakan pilih tanggal mulai dan selesai')),
+        const SnackBar(
+          content: Text('Silakan pilih tanggal mulai dan selesai'),
+        ),
       );
       return;
     }
@@ -83,7 +88,19 @@ class _RentalCheckoutScreenState extends State<RentalCheckoutScreen> {
     final user = context.read<ProfileProvider>().profile;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sesi pengguna tidak valid. Silakan login kembali.')),
+        const SnackBar(
+          content: Text('Sesi pengguna tidak valid. Silakan login kembali.'),
+        ),
+      );
+      return;
+    }
+
+    if (user.phoneNumber.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Anda wajib mengisi Nomor Telepon di menu Profil sebelum menyewa.'),
+          backgroundColor: Colors.orange,
+        ),
       );
       return;
     }
@@ -102,7 +119,9 @@ class _RentalCheckoutScreenState extends State<RentalCheckoutScreen> {
       );
 
       await context.read<RentalProvider>().addRental(rental);
-      
+
+      if (!mounted) return;
+      context.read<VehicleProvider>().loadVehicles();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pemesanan Berhasil Dikonfirmasi!')),
@@ -111,9 +130,9 @@ class _RentalCheckoutScreenState extends State<RentalCheckoutScreen> {
       Navigator.pop(context); // Kembali dua kali agar langsung ke list
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal memesan: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal memesan: $e')));
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
@@ -139,7 +158,11 @@ class _RentalCheckoutScreenState extends State<RentalCheckoutScreen> {
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.maroon, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: AppColors.maroon,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -147,7 +170,10 @@ class _RentalCheckoutScreenState extends State<RentalCheckoutScreen> {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 16,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -182,9 +208,18 @@ class _RentalCheckoutScreenState extends State<RentalCheckoutScreen> {
                             width: 80,
                             height: 80,
                             color: AppColors.maroon.withValues(alpha: 0.05),
-                            child: vehicle.imageUrl == null || vehicle.imageUrl!.isEmpty
-                                ? const Icon(Icons.directions_car, color: AppColors.maroon, size: 40)
-                                : Image.network(vehicle.imageUrl!, fit: BoxFit.cover),
+                            child:
+                                vehicle.imageUrl == null ||
+                                    vehicle.imageUrl!.isEmpty
+                                ? const Icon(
+                                    Icons.directions_car,
+                                    color: AppColors.maroon,
+                                    size: 40,
+                                  )
+                                : Image.network(
+                                    vehicle.imageUrl!,
+                                    fit: BoxFit.cover,
+                                  ),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -195,7 +230,9 @@ class _RentalCheckoutScreenState extends State<RentalCheckoutScreen> {
                               Text(
                                 vehicle.brand.toUpperCase(),
                                 style: TextStyle(
-                                  color: AppColors.maroon.withValues(alpha: 0.6),
+                                  color: AppColors.maroon.withValues(
+                                    alpha: 0.6,
+                                  ),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 11,
                                   letterSpacing: 1,
@@ -225,7 +262,7 @@ class _RentalCheckoutScreenState extends State<RentalCheckoutScreen> {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 32),
 
                   // 2. DATE PICKER
@@ -275,11 +312,16 @@ class _RentalCheckoutScreenState extends State<RentalCheckoutScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.maroon.withValues(alpha: 0.03),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.maroon.withValues(alpha: 0.1)),
+                      border: Border.all(
+                        color: AppColors.maroon.withValues(alpha: 0.1),
+                      ),
                     ),
                     child: Column(
                       children: [
-                        _buildReceiptRow('Harga Sewa', '${Formatters.rupiah(vehicle.pricePerDay)} /hari'),
+                        _buildReceiptRow(
+                          'Harga Sewa',
+                          '${Formatters.rupiah(vehicle.pricePerDay)} /hari',
+                        ),
                         const SizedBox(height: 12),
                         _buildReceiptRow('Durasi', '$days Hari'),
                         const SizedBox(height: 16),
@@ -301,7 +343,11 @@ class _RentalCheckoutScreenState extends State<RentalCheckoutScreen> {
                               ),
                             ),
                             Text(
-                              Formatters.rupiah(getTotalPrice(vehicle.pricePerDay.toDouble()).toInt()),
+                              Formatters.rupiah(
+                                getTotalPrice(
+                                  vehicle.pricePerDay.toDouble(),
+                                ).toInt(),
+                              ),
                               style: const TextStyle(
                                 color: AppColors.maroon,
                                 fontWeight: FontWeight.w900,
@@ -320,7 +366,12 @@ class _RentalCheckoutScreenState extends State<RentalCheckoutScreen> {
 
           // 4. BOTTOM ACTION BAR
           Container(
-            padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).padding.bottom + 16),
+            padding: EdgeInsets.fromLTRB(
+              24,
+              16,
+              24,
+              MediaQuery.of(context).padding.bottom + 16,
+            ),
             decoration: BoxDecoration(
               color: AppColors.white,
               boxShadow: [
@@ -370,13 +421,21 @@ class _RentalCheckoutScreenState extends State<RentalCheckoutScreen> {
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(Icons.calendar_month, color: AppColors.maroon, size: 16),
+                const Icon(
+                  Icons.calendar_month,
+                  color: AppColors.maroon,
+                  size: 16,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    date != null ? '${date.day}/${date.month}/${date.year}' : 'Pilih Tanggal',
+                    date != null
+                        ? '${date.day}/${date.month}/${date.year}'
+                        : 'Pilih Tanggal',
                     style: TextStyle(
-                      color: date != null ? AppColors.maroon : AppColors.maroon.withValues(alpha: 0.4),
+                      color: date != null
+                          ? AppColors.maroon
+                          : AppColors.maroon.withValues(alpha: 0.4),
                       fontWeight: FontWeight.w800,
                       fontSize: 14,
                     ),

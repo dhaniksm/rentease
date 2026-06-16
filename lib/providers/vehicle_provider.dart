@@ -23,7 +23,12 @@ class VehicleProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      vehicles = await _vehicleService.getVehicles();
+      debugPrint('Fetching vehicles...');
+      vehicles = await _vehicleService.getVehicles().timeout(const Duration(seconds: 10));
+      debugPrint('Fetched ${vehicles.length} vehicles');
+    } catch (e, stack) {
+      debugPrint('Error loading vehicles: $e');
+      debugPrint('Stack trace: $stack');
     } finally {
       isLoading = false;
       notifyListeners();

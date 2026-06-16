@@ -67,8 +67,18 @@ class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
       final end = start.add(Duration(days: totalDays - 1));
 
       final months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-        'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Ags',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des',
       ];
 
       final startDay = start.day;
@@ -102,7 +112,8 @@ class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
   Color _getStatusColor(String? status) {
     if (status == 'returned') return Colors.green.shade600;
     if (status == 'active') return Colors.blue.shade600;
-    if (status == 'canceled' || status == 'cancelled') return Colors.red.shade600;
+    if (status == 'canceled' || status == 'cancelled')
+      return Colors.red.shade600;
     return Colors.orange.shade600;
   }
 
@@ -137,16 +148,24 @@ class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
               onRefresh: fetchHistoryData,
               color: AppColors.maroon,
               child: isLoading && historyData.isEmpty
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.maroon))
+                  ? const Center(
+                      child: CircularProgressIndicator(color: AppColors.maroon),
+                    )
                   : historyData.isEmpty
                   ? ListView(
                       children: [
-                        SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.3,
+                        ),
                         const Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.history_outlined, size: 64, color: Colors.grey),
+                              Icon(
+                                Icons.history_outlined,
+                                size: 64,
+                                color: Colors.grey,
+                              ),
                               SizedBox(height: 16),
                               Text(
                                 'Belum ada riwayat penyewaan.',
@@ -162,25 +181,38 @@ class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
                       ],
                     )
                   : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
                       itemCount: historyData.length,
                       itemBuilder: (context, index) {
                         final item = historyData[index];
                         final vehicle = item['vehicle'] ?? {};
                         final profile = item['profiles'] ?? {};
-                        
-                        final String vName = '${vehicle['brand'] ?? ''} ${vehicle['vehicle_name'] ?? ''}'.trim();
-                        final String pName = profile['full_name'] ?? 'Unknown User';
+
+                        final String vName =
+                            '${vehicle['brand'] ?? ''} ${vehicle['vehicle_name'] ?? ''}'
+                                .trim();
+                        final String pName =
+                            profile['full_name'] ?? 'Unknown User';
                         final String plate = vehicle['plate_number'] ?? '-';
                         final imageUrl = vehicle['image_url'];
-                        
-                        final String startDate = item['start_date'] ?? item['waktu_sewa'] ?? '';
-                        final int totalDays = item['total_days'] ?? item['durasi_sewa'] ?? 0;
-                        
-                        final dynamic rawPrice = item['total_price'] ?? item['total_pembayaran'] ?? 0;
-                        final totalPrice = rawPrice is double ? rawPrice.toInt() : (rawPrice is int ? rawPrice : 0);
+
+                        final String startDate =
+                            item['start_date'] ?? item['waktu_sewa'] ?? '';
+                        final int totalDays =
+                            item['total_days'] ?? item['durasi_sewa'] ?? 0;
+
+                        final dynamic rawPrice =
+                            item['total_price'] ??
+                            item['total_pembayaran'] ??
+                            0;
+                        final totalPrice = rawPrice is double
+                            ? rawPrice.toInt()
+                            : (rawPrice is int ? rawPrice : 0);
                         final String status = item['status'] ?? '-';
-                        
+
                         final statusColor = _getStatusColor(status);
 
                         return Container(
@@ -213,26 +245,44 @@ class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
                                       width: 80,
                                       height: 80,
                                       decoration: BoxDecoration(
-                                        color: AppColors.maroon.withValues(alpha: 0.05),
+                                        color: AppColors.maroon.withValues(
+                                          alpha: 0.05,
+                                        ),
                                         borderRadius: BorderRadius.circular(16),
                                       ),
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(16),
-                                        child: imageUrl != null && imageUrl.toString().isNotEmpty
-                                            ? Image.network(imageUrl, fit: BoxFit.cover)
-                                            : const Icon(Icons.directions_car, color: AppColors.maroon, size: 40),
+                                        child:
+                                            imageUrl != null &&
+                                                imageUrl.toString().isNotEmpty
+                                            ? Image.network(
+                                                imageUrl,
+                                                fit: BoxFit.cover,
+                                              )
+                                            : const Icon(
+                                                Icons.directions_car,
+                                                color: AppColors.maroon,
+                                                size: 40,
+                                              ),
                                       ),
                                     ),
                                     const SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 6,
+                                            ),
                                             decoration: BoxDecoration(
-                                              color: statusColor.withValues(alpha: 0.1),
-                                              borderRadius: BorderRadius.circular(12),
+                                              color: statusColor.withValues(
+                                                alpha: 0.1,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                             ),
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
@@ -271,18 +321,25 @@ class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
                                           const SizedBox(height: 4),
                                           Row(
                                             children: [
-                                              Icon(Icons.person, size: 14, color: AppColors.maroon.withValues(alpha: 0.5)),
+                                              Icon(
+                                                Icons.person,
+                                                size: 14,
+                                                color: AppColors.maroon
+                                                    .withValues(alpha: 0.5),
+                                              ),
                                               const SizedBox(width: 4),
                                               Expanded(
                                                 child: Text(
                                                   pName,
                                                   style: TextStyle(
-                                                    color: AppColors.maroon.withValues(alpha: 0.7),
+                                                    color: AppColors.maroon
+                                                        .withValues(alpha: 0.7),
                                                     fontWeight: FontWeight.w600,
                                                     fontSize: 13,
                                                   ),
                                                   maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
                                               ),
                                             ],
@@ -295,31 +352,43 @@ class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
                               ),
                               // Bottom Section (Price & Duration)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 16,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.maroon.withValues(alpha: 0.04),
+                                  color: AppColors.maroon.withValues(
+                                    alpha: 0.04,
+                                  ),
                                   borderRadius: const BorderRadius.only(
                                     bottomLeft: Radius.circular(22),
                                     bottomRight: Radius.circular(22),
                                   ),
                                 ),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'Waktu Sewa ($totalDays Hari)',
                                           style: TextStyle(
-                                            color: AppColors.maroon.withValues(alpha: 0.5),
+                                            color: AppColors.maroon.withValues(
+                                              alpha: 0.5,
+                                            ),
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          _formatDateRange(startDate, totalDays),
+                                          _formatDateRange(
+                                            startDate,
+                                            totalDays,
+                                          ),
                                           style: const TextStyle(
                                             color: AppColors.maroon,
                                             fontSize: 13,
@@ -329,12 +398,15 @@ class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
                                       ],
                                     ),
                                     Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
                                       children: [
                                         Text(
                                           'Total Pembayaran',
                                           style: TextStyle(
-                                            color: AppColors.maroon.withValues(alpha: 0.5),
+                                            color: AppColors.maroon.withValues(
+                                              alpha: 0.5,
+                                            ),
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
                                           ),

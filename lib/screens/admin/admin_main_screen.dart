@@ -22,7 +22,8 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
     DashboardScreen(
       onNavigateToHistory: () {
         setState(() {
-          _selectedIndex = 5; // Index for RIWAYAT changed to 5 because of KENDARAAN
+          _selectedIndex =
+              5; // Index for RIWAYAT changed to 5 because of KENDARAAN
         });
       },
     ),
@@ -44,8 +45,14 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
         unselectedItemColor: Colors.grey,
         showSelectedLabels: true,
         showUnselectedLabels: true,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 10),
+        selectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 10,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.normal,
+          fontSize: 10,
+        ),
         elevation: 10,
         currentIndex: _selectedIndex,
         onTap: (index) {

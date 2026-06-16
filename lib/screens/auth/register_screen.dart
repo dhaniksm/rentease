@@ -21,6 +21,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final phoneController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -83,7 +84,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       } else if (e.toString().contains('SocketException')) {
         errorMessage = 'Tidak ada koneksi internet.';
       } else {
-        errorMessage = e.toString().replaceAll('Exception: ', '').replaceAll('AuthException: ', '');
+        errorMessage = e
+            .toString()
+            .replaceAll('Exception: ', '')
+            .replaceAll('AuthException: ', '');
       }
       _showError(errorMessage);
     }
@@ -139,7 +143,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             // Form Section
             Expanded(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 40,
+                ),
                 decoration: const BoxDecoration(
                   color: AppColors.white,
                   borderRadius: BorderRadius.only(
@@ -178,16 +185,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         controller: passwordController,
                         hintText: 'Kata Sandi',
                         icon: Icons.lock_outline,
-                        obscureText: true,
+                        obscureText: _obscurePassword,
                         color: AppColors.maroon,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            color: AppColors.maroon,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
                       ),
                       const SizedBox(height: 20),
                       RentEaseTextField(
                         controller: confirmPasswordController,
                         hintText: 'Konfirmasi Kata Sandi',
                         icon: Icons.lock_outline,
-                        obscureText: true,
+                        obscureText: _obscurePassword,
                         color: AppColors.maroon,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            color: AppColors.maroon,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
                       ),
                       const SizedBox(height: 40),
                       PrimaryButton(
@@ -201,9 +230,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         children: [
                           Text(
                             'Sudah Punya Akun?',
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                            ),
+                            style: TextStyle(color: Colors.grey.shade600),
                           ),
                           TextButton(
                             onPressed: () {

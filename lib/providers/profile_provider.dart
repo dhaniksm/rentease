@@ -19,4 +19,37 @@ class ProfileProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> editProfile({String? fullName, String? phoneNumber, String? avatarUrl}) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      await _profileService.updateProfile(
+        fullName: fullName,
+        phoneNumber: phoneNumber,
+        avatarUrl: avatarUrl,
+      );
+      // Reload profile to get updated data
+      profile = await _profileService.getProfile();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateAvatar(dynamic file, String extension) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      final imageUrl = await _profileService.uploadAvatar(file, extension);
+      await _profileService.updateProfile(avatarUrl: imageUrl);
+      // Reload profile
+      profile = await _profileService.getProfile();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
 }

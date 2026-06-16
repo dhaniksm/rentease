@@ -9,7 +9,7 @@ import 'package:rentease/core/api_config.dart';
 
 class VehicleService {
   static String get baseUrl => ApiConfig.baseUrl;
-  static const String storageBucket = 'vehicle-images';
+  static const String storageBucket = 'vehicles';
 
   Map<String, String> get _headers {
     final token = supabase.auth.currentSession?.accessToken;
@@ -30,7 +30,11 @@ class VehicleService {
   }
 
   Future<List<VehicleModel>> getVehicles() async {
-    final response = await http.get(Uri.parse('$baseUrl/vehicles'), headers: _headers);
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final response = await http.get(
+      Uri.parse('$baseUrl/vehicles?t=$timestamp'),
+      headers: _headers,
+    );
     _checkResponse(response);
 
     final decoded = jsonDecode(response.body);
@@ -60,7 +64,10 @@ class VehicleService {
   }
 
   Future<void> deleteVehicle(String id) async {
-    final response = await http.delete(Uri.parse('$baseUrl/vehicles/$id'), headers: _headers);
+    final response = await http.delete(
+      Uri.parse('$baseUrl/vehicles/$id'),
+      headers: _headers,
+    );
     _checkResponse(response);
   }
 
@@ -83,7 +90,7 @@ class VehicleService {
 
   Future<String> uploadVehicleImage(File imageFile) async {
     final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-    final storagePath = 'vehicles/$fileName';
+    final storagePath = 'vehicles/images/$fileName';
 
     await supabase.storage.from(storageBucket).upload(storagePath, imageFile);
 

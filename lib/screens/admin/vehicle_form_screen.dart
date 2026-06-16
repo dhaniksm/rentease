@@ -20,12 +20,13 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
   final nameController = TextEditingController();
   final brandController = TextEditingController();
   final plateController = TextEditingController();
-  final chassisController = TextEditingController();
   final priceController = TextEditingController();
   final descriptionController = TextEditingController();
+  final capacityController = TextEditingController();
 
   String vehicleType = 'MOTOR';
   String status = 'available';
+  String transmission = 'Otomatis';
   File? selectedImage;
   bool isLoading = false;
   VehicleModel? editedVehicle;
@@ -40,11 +41,23 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
       nameController.text = argument.vehicleName;
       brandController.text = argument.brand;
       plateController.text = argument.plateNumber;
-      chassisController.text = argument.chassisNumber;
       priceController.text = argument.pricePerDay.toString();
+      capacityController.text = argument.capacity.toString();
       descriptionController.text = argument.description ?? '';
       vehicleType = argument.vehicleType.toUpperCase();
-      status = argument.status;
+      if (!['MOTOR', 'MOBIL'].contains(vehicleType)) {
+        vehicleType = 'MOTOR';
+      }
+
+      status = argument.status.toLowerCase();
+      if (!['available', 'rented', 'maintenance'].contains(status)) {
+        status = 'available';
+      }
+
+      transmission = argument.transmission ?? 'Otomatis';
+      if (!['Manual', 'Otomatis'].contains(transmission)) {
+        transmission = 'Otomatis';
+      }
     }
   }
 
@@ -53,9 +66,9 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
     nameController.dispose();
     brandController.dispose();
     plateController.dispose();
-    chassisController.dispose();
     priceController.dispose();
     descriptionController.dispose();
+    capacityController.dispose();
     super.dispose();
   }
 
@@ -69,7 +82,8 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
   }
 
   Future<void> saveVehicle() async {
-    if (nameController.text.trim().isEmpty || brandController.text.trim().isEmpty) {
+    if (nameController.text.trim().isEmpty ||
+        brandController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Nama dan Merk kendaraan wajib diisi')),
       );
@@ -77,6 +91,7 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
     }
 
     final price = int.tryParse(priceController.text.replaceAll('.', '')) ?? 0;
+    final capacity = int.tryParse(capacityController.text) ?? 4;
 
     final vehicle = VehicleModel(
       id: editedVehicle?.id ?? '',
@@ -84,11 +99,13 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
       brand: brandController.text.trim(),
       vehicleType: vehicleType.toLowerCase(),
       plateNumber: plateController.text.trim(),
-      chassisNumber: chassisController.text.trim(),
       pricePerDay: price,
       status: status,
       imageUrl: editedVehicle?.imageUrl,
       description: descriptionController.text.trim(),
+      transmission: transmission,
+      capacity: capacity,
+      rating: editedVehicle?.rating ?? 5.0,
     );
 
     setState(() => isLoading = true);
@@ -140,7 +157,8 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                 children: [
                   if (selectedImage != null)
                     Image.file(selectedImage!, fit: BoxFit.cover)
-                  else if (editedVehicle?.imageUrl != null && editedVehicle!.imageUrl!.isNotEmpty)
+                  else if (editedVehicle?.imageUrl != null &&
+                      editedVehicle!.imageUrl!.isNotEmpty)
                     Image.network(editedVehicle!.imageUrl!, fit: BoxFit.cover)
                   else
                     Container(
@@ -149,20 +167,30 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.camera_alt_outlined, color: Colors.white54, size: 64),
+                            Icon(
+                              Icons.camera_alt_outlined,
+                              color: Colors.white54,
+                              size: 64,
+                            ),
                             SizedBox(height: 8),
                             Text(
                               'Tap untuk tambah foto',
-                              style: TextStyle(color: Colors.white54, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: Colors.white54,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                  
+
                   // Gradient Overlay so back button is visible
                   Positioned(
-                    top: 0, left: 0, right: 0, height: 100,
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 100,
                     child: Container(
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
@@ -186,7 +214,10 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new,
+                    color: Colors.white,
+                  ),
                   onPressed: () => Navigator.pop(context),
                 ),
                 Expanded(
@@ -241,7 +272,7 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                         controller: brandController,
                         hint: 'Contoh: Toyota',
                       ),
-                      
+
                       const SizedBox(height: 24),
                       _buildSectionTitle('Detail Tipe & Harga'),
                       Row(
@@ -252,7 +283,8 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                               icon: Icons.category_outlined,
                               value: vehicleType,
                               items: ['MOTOR', 'MOBIL'],
-                              onChanged: (val) => setState(() => vehicleType = val ?? 'MOTOR'),
+                              onChanged: (val) =>
+                                  setState(() => vehicleType = val ?? 'MOTOR'),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -263,7 +295,8 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                               value: status,
                               items: ['available', 'rented', 'maintenance'],
                               displayItems: ['Tersedia', 'Disewa', 'Perbaikan'],
-                              onChanged: (val) => setState(() => status = val ?? 'available'),
+                              onChanged: (val) =>
+                                  setState(() => status = val ?? 'available'),
                             ),
                           ),
                         ],
@@ -276,6 +309,31 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                         hint: 'Contoh: 300000',
                         keyboardType: TextInputType.number,
                       ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildInputGroup(
+                              label: 'Kapasitas (Orang)',
+                              icon: Icons.people_outline,
+                              controller: capacityController,
+                              hint: 'Contoh: 4',
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildDropdownGroup(
+                              label: 'Transmisi',
+                              icon: Icons.settings_outlined,
+                              value: transmission,
+                              items: ['Manual', 'Otomatis'],
+                              onChanged: (val) =>
+                                  setState(() => transmission = val ?? 'Otomatis'),
+                            ),
+                          ),
+                        ],
+                      ),
 
                       const SizedBox(height: 24),
                       _buildSectionTitle('Identitas Kendaraan'),
@@ -284,12 +342,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                         icon: Icons.pin_outlined,
                         controller: plateController,
                         hint: 'Contoh: B 1234 ABC',
-                      ),
-                      _buildInputGroup(
-                        label: 'Nomor Rangka',
-                        icon: Icons.numbers,
-                        controller: chassisController,
-                        hint: 'Opsional',
                       ),
                       _buildInputGroup(
                         label: 'Deskripsi Tambahan',
@@ -357,7 +409,9 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
             decoration: BoxDecoration(
               color: AppColors.maroon.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.maroon.withValues(alpha: 0.1)),
+              border: Border.all(
+                color: AppColors.maroon.withValues(alpha: 0.1),
+              ),
             ),
             child: TextField(
               controller: controller,
@@ -373,7 +427,13 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                   color: AppColors.maroon.withValues(alpha: 0.3),
                   fontWeight: FontWeight.normal,
                 ),
-                prefixIcon: maxLines == 1 ? Icon(icon, color: AppColors.maroon.withValues(alpha: 0.5), size: 20) : null,
+                prefixIcon: maxLines == 1
+                    ? Icon(
+                        icon,
+                        color: AppColors.maroon.withValues(alpha: 0.5),
+                        size: 20,
+                      )
+                    : null,
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(
                   horizontal: 16,
@@ -418,7 +478,10 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
             child: DropdownButton<String>(
               value: value,
               isExpanded: true,
-              icon: Icon(Icons.keyboard_arrow_down, color: AppColors.maroon.withValues(alpha: 0.5)),
+              icon: Icon(
+                Icons.keyboard_arrow_down,
+                color: AppColors.maroon.withValues(alpha: 0.5),
+              ),
               style: const TextStyle(
                 color: AppColors.maroon,
                 fontWeight: FontWeight.bold,
@@ -427,7 +490,9 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
               items: List.generate(items.length, (index) {
                 return DropdownMenuItem(
                   value: items[index],
-                  child: Text(displayItems != null ? displayItems[index] : items[index]),
+                  child: Text(
+                    displayItems != null ? displayItems[index] : items[index],
+                  ),
                 );
               }),
               onChanged: onChanged,

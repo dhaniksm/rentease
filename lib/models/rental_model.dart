@@ -28,7 +28,7 @@ class RentalModel {
         json['start_date'] ?? DateTime.now().toIso8601String(),
       ),
       endDate: DateTime.parse(
-        json['end_date'] ?? DateTime.now().toIso8601String(),
+        json['end_date'] ?? json['expected_return_date'] ?? DateTime.now().toIso8601String(),
       ),
       totalPrice: (json['total_price'] ?? 0).toDouble(),
       status: json['status'] ?? json['rental_status'] ?? '',
@@ -44,7 +44,7 @@ class RentalModel {
       'vehicle_id': vehicleId,
       'user_id': userId,
       'start_date': startDate.toIso8601String(),
-      'end_date': endDate.toIso8601String(),
+      'expected_return_date': endDate.toIso8601String(),
       'total_price': totalPrice,
       'status': status,
     };

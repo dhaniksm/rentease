@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import 'package:rentease/providers/rental_provider.dart';
+import 'package:rentease/providers/vehicle_provider.dart';
 import 'package:rentease/utils/app_colors.dart';
 
 class QrScannerScreen extends StatefulWidget {
@@ -61,6 +64,20 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
 
     // Find active/paid rental matching the qrData
     // We check if qrData matches vehicle_id OR plate_number
+    // qrData from backend is usually a JSON string like: {"vehicleId":"...","plateNumber":"..."}
+    String targetVehicleId = qrData;
+    String targetPlateNumber = qrData;
+
+    try {
+      final decoded = jsonDecode(qrData);
+      if (decoded is Map) {
+        targetVehicleId = decoded['vehicleId']?.toString() ?? targetVehicleId;
+        targetPlateNumber = decoded['plateNumber']?.toString() ?? targetPlateNumber;
+      }
+    } catch (_) {
+      // Not a valid JSON, fallback to direct string match
+    }
+
     Map<String, dynamic>? matchedRental;
 
     for (var rental in rawRentals) {
@@ -71,21 +88,24 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       final vehicle = rental['vehicle'] ?? {};
       final plate = vehicle['plate_number']?.toString() ?? '';
 
-      if (qrData == vId || qrData == plate) {
+      if (targetVehicleId == vId || targetPlateNumber == plate || qrData == vId || qrData == plate) {
         matchedRental = rental;
         break;
       }
     }
 
     if (matchedRental == null) {
-      await _showErrorDialog('Tidak ditemukan penyewaan aktif atau lunas untuk kode QR ini.\n\nData QR: $qrData');
+      await _showErrorDialog(
+        'Tidak ditemukan penyewaan aktif atau lunas untuk kode QR ini.\n\nData QR: $qrData',
+      );
       return;
     }
 
     final status = matchedRental['status'] ?? matchedRental['rental_status'];
     final rentalId = matchedRental['id'] ?? '';
     final vehicle = matchedRental['vehicle'] ?? {};
-    final vName = '${vehicle['brand'] ?? ''} ${vehicle['vehicle_name'] ?? ''} - ${vehicle['plate_number'] ?? ''}';
+    final vName =
+        '${vehicle['brand'] ?? ''} ${vehicle['vehicle_name'] ?? ''} - ${vehicle['plate_number'] ?? ''}';
 
     if (status == 'paid') {
       final confirm = await _showConfirmDialog(
@@ -93,7 +113,10 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         'Tandai $vName sebagai telah diambil oleh penyewa?\nStatus akan berubah menjadi Active.',
       );
       if (confirm == true) {
-        await _executeAction(provider.verifyVehicle(rentalId), 'Pickup berhasil dikonfirmasi!');
+        await _executeAction(
+          provider.verifyVehicle(rentalId),
+          'Pickup berhasil dikonfirmasi!',
+        );
       }
     } else if (status == 'active') {
       final confirm = await _showConfirmDialog(
@@ -101,26 +124,38 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         'Tandai $vName sebagai telah dikembalikan?\nStatus akan berubah menjadi Completed.',
       );
       if (confirm == true) {
-        await _executeAction(provider.returnRental(rentalId), 'Pengembalian berhasil dikonfirmasi!');
+        await _executeAction(
+          provider.returnRental(rentalId),
+          'Pengembalian berhasil dikonfirmasi!',
+        );
       }
     }
   }
 
-  Future<void> _executeAction(Future<void> action, String successMessage) async {
+  Future<void> _executeAction(
+    Future<void> action,
+    String successMessage,
+  ) async {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator(color: AppColors.maroon)),
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.maroon),
+      ),
     );
 
     try {
       await action;
-      if (mounted) Navigator.pop(context); // close loading
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(successMessage), backgroundColor: Colors.green),
-        );
-      }
+      if (!mounted) return;
+      Navigator.pop(context); // close loading
+      context.read<VehicleProvider>().loadVehicles();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(successMessage),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
       if (mounted) Navigator.pop(context); // close loading
       await _showErrorDialog('Gagal memproses permintaan:\n$e');
@@ -132,7 +167,13 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
-        title: Text(title, style: const TextStyle(color: AppColors.maroon, fontWeight: FontWeight.bold)),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: AppColors.maroon,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         content: Text(content, style: const TextStyle(color: Colors.black87)),
         actions: [
           TextButton(
@@ -142,7 +183,10 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.maroon),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Konfirmasi', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Konfirmasi',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -154,12 +198,21 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
-        title: const Text('Pemindaian Gagal', style: TextStyle(color: AppColors.maroon, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Pemindaian Gagal',
+          style: TextStyle(
+            color: AppColors.maroon,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         content: Text(message, style: const TextStyle(color: Colors.black87)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Tutup', style: TextStyle(color: AppColors.maroon)),
+            child: const Text(
+              'Tutup',
+              style: TextStyle(color: AppColors.maroon),
+            ),
           ),
         ],
       ),
@@ -207,7 +260,10 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                   width: 250,
                   height: 250,
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 4),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      width: 4,
+                    ),
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
@@ -229,11 +285,22 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                 _scannerController.toggleTorch();
               },
               icon: const Icon(Icons.flash_on, color: Colors.white),
-              label: const Text('Senter', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              label: const Text(
+                'Senter',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.maroon,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ),

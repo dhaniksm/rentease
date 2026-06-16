@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:rentease/core/supabase_config.dart';
 
@@ -16,13 +17,18 @@ class AuthService {
 
     final user = response.user;
     if (user != null) {
-      await supabase.from('profiles').upsert({
-        'id': user.id,
-        'full_name': fullName,
-        'email': email,
-        'phone_number': phoneNumber,
-        'role': 'user', // Default is always user for security
-      });
+      try {
+        await supabase.from('profiles').upsert({
+          'id': user.id,
+          'full_name': fullName,
+          'email': email,
+          'phone_number': phoneNumber,
+          'role': 'user', // Default is always user for security
+        });
+      } catch (e) {
+        // Ignore error if profile is automatically created by a Supabase trigger or blocked by RLS
+        debugPrint('Profile upsert ignored (likely handled by backend trigger): $e');
+      }
     }
   }
 
@@ -36,5 +42,9 @@ class AuthService {
 
   User? getCurrentUser() {
     return supabase.auth.currentUser;
+  }
+
+  Future<void> resetPassword(String email) async {
+    await supabase.auth.resetPasswordForEmail(email);
   }
 }

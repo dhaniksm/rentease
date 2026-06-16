@@ -1,7 +1,9 @@
 import 'package:rentease/providers/payment_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rentease/providers/rental_provider.dart';
 import 'package:rentease/providers/profile_provider.dart';
+import 'package:rentease/providers/vehicle_provider.dart';
 import 'package:rentease/utils/app_colors.dart';
 import 'package:rentease/utils/formatters.dart';
 import 'package:rentease/widgets/primary_button.dart';
@@ -86,18 +88,22 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
     });
 
     try {
-      final paymentProvider = context.read<PaymentProvider>();
-      await paymentProvider.loadPayments();
+      final rentalProvider = context.read<RentalProvider>();
+      await rentalProvider.loadUserRentals(currentUserId);
 
-      final allRentals = paymentProvider.rawPayments
+      final userRentals = rentalProvider.rawRentals
           .map((json) => UserRentalModel.fromJson(json))
           .toList();
 
       if (!mounted) return;
       setState(() {
-        _myRentals = allRentals
-            .where((r) => r.userId == currentUserId)
-            .toList();
+        _myRentals = userRentals;
+        
+        // Filter out canceled or completely finished rentals if desired, 
+        // but since this is payment screen, we'll just show all user rentals 
+        // and let them pay the unpaid ones.
+        
+        // Reset selection if out of bounds
         // Reset selection if out of bounds
         if (_selectedCardIndex >= _myRentals.length) {
           _selectedCardIndex = 0;
@@ -166,22 +172,67 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
             );
           }
         });
-        _showSnackBar('Konfirmasi pembayaran (MOCK) terkirim!', Colors.green.shade700);
+        _showSnackBar(
+          'Konfirmasi pembayaran (MOCK) terkirim!',
+          Colors.green.shade700,
+        );
       } else {
-        _showSnackBar('Koneksi internet bermasalah.', AppColors.maroon);
+        _showSnackBar(
+          'Gagal mengkonfirmasi pembayaran. Coba lagi.',
+          AppColors.maroon,
+        );
       }
     } finally {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
     }
   }
 
-  void _showSnackBar(String msg, Color bg) {
+  Future<void> _cancelRental(String rentalId) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final rentalProvider = context.read<RentalProvider>();
+      await rentalProvider.cancelRental(rentalId);
+
+      if (!mounted) return;
+      context.read<VehicleProvider>().loadVehicles();
+
+      if (!mounted) return;
+      _showSnackBar(
+        'Pesanan berhasil dibatalkan.',
+        Colors.blue.shade700,
+      );
+      _fetchMyRentals();
+    } catch (e) {
+      if (!mounted) return;
+      _showSnackBar(
+        'Gagal membatalkan pesanan. Coba lagi.',
+        AppColors.maroon,
+      );
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _showSnackBar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: bg,
+        content: Text(
+          message,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: color,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -195,8 +246,18 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
       final end = start.add(Duration(days: totalDays - 1));
 
       final months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-        'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Ags',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des',
       ];
 
       final startDay = start.day;
@@ -225,6 +286,8 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
       return 'LUNAS';
     } else if (status == 'pending_verification') {
       return 'MENUNGGU VERIFIKASI';
+    } else if (status == 'cancelled') {
+      return 'DIBATALKAN';
     } else {
       return 'BELUM DIBAYAR';
     }
@@ -235,6 +298,8 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
       return Colors.green.shade600;
     } else if (status == 'pending_verification') {
       return Colors.orange.shade600;
+    } else if (status == 'cancelled') {
+      return Colors.grey.shade600;
     } else {
       return AppColors.maroon;
     }
@@ -271,12 +336,18 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
                   : _myRentals.isEmpty
                   ? ListView(
                       children: [
-                        SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.3,
+                        ),
                         const Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey),
+                              Icon(
+                                Icons.receipt_long_outlined,
+                                size: 64,
+                                color: Colors.grey,
+                              ),
                               SizedBox(height: 16),
                               Text(
                                 'Belum ada transaksi pembayaran.',
@@ -292,12 +363,17 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
                       ],
                     )
                   : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
                       itemCount: _myRentals.length,
                       itemBuilder: (context, index) {
                         final rental = _myRentals[index];
                         final isSelected = index == _selectedCardIndex;
-                        final statusColor = _getStatusColor(rental.rentalStatus);
+                        final statusColor = _getStatusColor(
+                          rental.rentalStatus,
+                        );
 
                         return GestureDetector(
                           onTap: () {
@@ -312,16 +388,18 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
                               color: AppColors.white,
                               borderRadius: BorderRadius.circular(24),
                               border: Border.all(
-                                color: isSelected 
-                                    ? AppColors.maroon 
+                                color: isSelected
+                                    ? AppColors.maroon
                                     : AppColors.maroon.withValues(alpha: 0.1),
                                 width: isSelected ? 2 : 1.5,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: isSelected 
+                                  color: isSelected
                                       ? AppColors.maroon.withValues(alpha: 0.15)
-                                      : AppColors.maroon.withValues(alpha: 0.05),
+                                      : AppColors.maroon.withValues(
+                                          alpha: 0.05,
+                                        ),
                                   blurRadius: isSelected ? 20 : 10,
                                   offset: const Offset(0, 8),
                                 ),
@@ -334,18 +412,27 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
                                 Padding(
                                   padding: const EdgeInsets.all(20),
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       // Status Dot & Dates
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 6,
+                                                  ),
                                               decoration: BoxDecoration(
-                                                color: statusColor.withValues(alpha: 0.1),
-                                                borderRadius: BorderRadius.circular(12),
+                                                color: statusColor.withValues(
+                                                  alpha: 0.1,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
                                               ),
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
@@ -360,11 +447,14 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
                                                   ),
                                                   const SizedBox(width: 6),
                                                   Text(
-                                                    _getStatusText(rental.rentalStatus),
+                                                    _getStatusText(
+                                                      rental.rentalStatus,
+                                                    ),
                                                     style: TextStyle(
                                                       color: statusColor,
                                                       fontSize: 10,
-                                                      fontWeight: FontWeight.bold,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                     ),
                                                   ),
                                                 ],
@@ -382,12 +472,21 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
                                             const SizedBox(height: 4),
                                             Row(
                                               children: [
-                                                Icon(Icons.calendar_month_outlined, size: 14, color: AppColors.maroon.withValues(alpha: 0.5)),
+                                                Icon(
+                                                  Icons.calendar_month_outlined,
+                                                  size: 14,
+                                                  color: AppColors.maroon
+                                                      .withValues(alpha: 0.5),
+                                                ),
                                                 const SizedBox(width: 4),
                                                 Text(
-                                                  _formatDateRange(rental.startDate, rental.totalDays),
+                                                  _formatDateRange(
+                                                    rental.startDate,
+                                                    rental.totalDays,
+                                                  ),
                                                   style: TextStyle(
-                                                    color: AppColors.maroon.withValues(alpha: 0.7),
+                                                    color: AppColors.maroon
+                                                        .withValues(alpha: 0.7),
                                                     fontWeight: FontWeight.w600,
                                                     fontSize: 13,
                                                   ),
@@ -402,24 +501,32 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
                                 ),
                                 // Bottom Section (Price & Duration)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 16,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.maroon.withValues(alpha: 0.04),
+                                    color: AppColors.maroon.withValues(
+                                      alpha: 0.04,
+                                    ),
                                     borderRadius: const BorderRadius.only(
                                       bottomLeft: Radius.circular(22),
                                       bottomRight: Radius.circular(22),
                                     ),
                                   ),
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             'Durasi Sewa',
                                             style: TextStyle(
-                                              color: AppColors.maroon.withValues(alpha: 0.5),
+                                              color: AppColors.maroon
+                                                  .withValues(alpha: 0.5),
                                               fontSize: 11,
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -436,19 +543,23 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
                                         ],
                                       ),
                                       Column(
-                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
                                         children: [
                                           Text(
                                             'Total Tagihan',
                                             style: TextStyle(
-                                              color: AppColors.maroon.withValues(alpha: 0.5),
+                                              color: AppColors.maroon
+                                                  .withValues(alpha: 0.5),
                                               fontSize: 11,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
-                                            Formatters.rupiah(rental.totalPrice),
+                                            Formatters.rupiah(
+                                              rental.totalPrice,
+                                            ),
                                             style: const TextStyle(
                                               color: AppColors.maroon,
                                               fontSize: 18,
@@ -472,7 +583,12 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
           // BOTTOM ACTION BAR
           if (_myRentals.isNotEmpty)
             Container(
-              padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).padding.bottom + 16),
+              padding: EdgeInsets.fromLTRB(
+                24,
+                16,
+                24,
+                MediaQuery.of(context).padding.bottom + 16,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.white,
                 boxShadow: [
@@ -483,12 +599,44 @@ class _UserPaymentScreenState extends State<UserPaymentScreen> {
                   ),
                 ],
               ),
-              child: PrimaryButton(
-                text: 'KONFIRMASI PEMBAYARAN',
-                isLoading: _isLoading,
-                onPressed: _myRentals[_selectedCardIndex].rentalStatus != 'unpaid'
-                    ? null
-                    : () => _confirmPayment(_myRentals[_selectedCardIndex].id),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  PrimaryButton(
+                    text: 'KONFIRMASI PEMBAYARAN',
+                    isLoading: _isLoading,
+                    onPressed:
+                        _myRentals[_selectedCardIndex].rentalStatus != 'unpaid'
+                        ? null
+                        : () => _confirmPayment(_myRentals[_selectedCardIndex].id),
+                  ),
+                  if (_myRentals[_selectedCardIndex].rentalStatus == 'unpaid') ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 55,
+                      child: OutlinedButton(
+                        onPressed: _isLoading
+                            ? null
+                            : () => _cancelRental(_myRentals[_selectedCardIndex].id),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red.shade700,
+                          side: BorderSide(color: Colors.red.shade700, width: 2),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text(
+                          'BATALKAN PESANAN',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
         ],

@@ -22,6 +22,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -42,7 +43,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> login() async {
-    if (emailController.text.trim().isEmpty || passwordController.text.isEmpty) {
+    if (emailController.text.trim().isEmpty ||
+        passwordController.text.isEmpty) {
       _showError('Email dan Kata Sandi harus diisi');
       return;
     }
@@ -78,10 +80,69 @@ class _LoginScreenState extends State<LoginScreen> {
       } else if (e.toString().contains('SocketException')) {
         errorMessage = 'Tidak ada koneksi internet.';
       } else {
-        errorMessage = e.toString().replaceAll('Exception: ', '').replaceAll('AuthException: ', '');
+        errorMessage = e
+            .toString()
+            .replaceAll('Exception: ', '')
+            .replaceAll('AuthException: ', '');
       }
       _showError(errorMessage);
     }
+  }
+
+  void _showForgotPasswordDialog() {
+    final resetEmailController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Lupa Kata Sandi?', style: TextStyle(color: AppColors.maroon, fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Masukkan email Anda untuk menerima tautan reset kata sandi.'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: resetEmailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email, color: AppColors.maroon),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.maroon),
+              onPressed: () async {
+                if (resetEmailController.text.trim().isEmpty) {
+                  _showError('Email tidak boleh kosong');
+                  return;
+                }
+                Navigator.pop(ctx);
+                try {
+                  await context.read<AuthProvider>().resetPassword(resetEmailController.text.trim());
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Tautan reset kata sandi telah dikirim ke email Anda.'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } catch (e) {
+                  _showError('Gagal mengirim tautan reset: ${e.toString()}');
+                }
+              },
+              child: const Text('Kirim', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -126,7 +187,10 @@ class _LoginScreenState extends State<LoginScreen> {
             // Form Section
             Expanded(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 40,
+                ),
                 decoration: const BoxDecoration(
                   color: AppColors.white,
                   borderRadius: BorderRadius.only(
@@ -150,22 +214,33 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: passwordController,
                         hintText: 'Kata Sandi',
                         icon: Icons.lock_outline,
-                        obscureText: true,
+                        obscureText: _obscurePassword,
                         color: AppColors.maroon,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            color: AppColors.maroon,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
                       ),
-                      // const SizedBox(height: 12),
-                      // Align(
-                      //   alignment: Alignment.centerRight,
-                      //   child: TextButton(
-                      //     onPressed: () {},
-                      //     child: Text(
-                      //       'Lupa Kata Sandi?',
-                      //       style: TextStyle(
-                      //         color: AppColors.maroon.withValues(alpha: 0.8),
-                      //         fontWeight: FontWeight.bold,
-                      //       ),
-                      //     ),
-                      //   ),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _showForgotPasswordDialog,
+                          child: Text(
+                            'Lupa Kata Sandi?',
+                            style: TextStyle(
+                              color: AppColors.maroon.withValues(alpha: 0.8),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 32),
                       PrimaryButton(
@@ -179,9 +254,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Text(
                             'Belum Punya Akun?',
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                            ),
+                            style: TextStyle(color: Colors.grey.shade600),
                           ),
                           TextButton(
                             onPressed: () {

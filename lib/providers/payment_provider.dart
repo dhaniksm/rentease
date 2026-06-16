@@ -27,16 +27,16 @@ class PaymentProvider extends ChangeNotifier {
   Future<void> confirmPayment(String id) async {
     try {
       await _paymentService.confirmPayment(id);
-      await loadPayments();
+      // Removed loadPayments() because user doesn't have permission to fetch all rentals
     } catch (e) {
       debugPrint('Error confirming payment: $e');
       rethrow;
     }
   }
 
-  Future<void> verifyPayment(String id) async {
+  Future<void> verifyPayment(String id, String method) async {
     try {
-      await _paymentService.verifyPayment(id);
+      await _paymentService.verifyPayment(id, method);
       await loadPayments();
     } catch (e) {
       debugPrint('Error verifying payment: $e');

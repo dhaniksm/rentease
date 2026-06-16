@@ -33,15 +33,18 @@ class RentalModel {
   factory RentalModel.fromJson(Map<String, dynamic> json) {
     return RentalModel(
       id: json['id'] ?? '',
-      vehicleName: json['vehicle_name'] ?? json['nama_kendaraan'] ?? 'Unknown Vehicle',
+      vehicleName:
+          json['vehicle_name'] ?? json['nama_kendaraan'] ?? 'Unknown Vehicle',
       plateNumber: json['plate_number'] ?? json['plat_nomor'] ?? '-',
       fullName: json['full_name'] ?? json['nama_penyewa'] ?? 'Unknown Customer',
       startDate: json['start_date'] ?? json['waktu_sewa'],
       totalDays: json['total_days'] ?? json['durasi_sewa'] ?? 1,
-      totalPrice: (json['total_price'] ?? json['total_pembayaran'] ?? 0) is double
+      totalPrice:
+          (json['total_price'] ?? json['total_pembayaran'] ?? 0) is double
           ? (json['total_price'] ?? json['total_pembayaran'] ?? 0).toInt()
           : (json['total_price'] ?? json['total_pembayaran'] ?? 0),
-      rentalStatus: json['rental_status'] ?? json['status'] ?? 'pending_verification',
+      rentalStatus:
+          json['rental_status'] ?? json['status'] ?? 'pending_verification',
       paymentMethod: json['payment_method'],
       imageUrl: json['vehicle'] != null ? json['vehicle']['image_url'] : null,
     );
@@ -133,7 +136,7 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
 
     try {
       final paymentProvider = context.read<PaymentProvider>();
-      await paymentProvider.verifyPayment(id);
+      await paymentProvider.verifyPayment(id, method.toLowerCase());
 
       if (!mounted) return;
       _showSnackBar(
@@ -143,7 +146,10 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
       _fetchRentals();
     } catch (e) {
       if (!mounted) return;
-      _showSnackBar('Gagal menghubungkan ke server untuk verifikasi.', AppColors.maroon);
+      _showSnackBar(
+        'Gagal menghubungkan ke server untuk verifikasi.',
+        AppColors.maroon,
+      );
       _fetchRentals();
     } finally {
       if (!mounted) return;
@@ -169,7 +175,9 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
         final vehicle = rental.vehicleName?.toLowerCase() ?? '';
         final renter = rental.fullName?.toLowerCase() ?? '';
         final plate = rental.plateNumber?.toLowerCase() ?? '';
-        return vehicle.contains(query) || renter.contains(query) || plate.contains(query);
+        return vehicle.contains(query) ||
+            renter.contains(query) ||
+            plate.contains(query);
       }).toList();
     }
 
@@ -181,7 +189,13 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
   void _showSnackBar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        content: Text(
+          message,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -194,6 +208,8 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
       return 'LUNAS';
     } else if (status == 'pending_verification') {
       return 'MENUNGGU VERIFIKASI';
+    } else if (status == 'cancelled') {
+      return 'DIBATALKAN';
     } else {
       return 'BELUM DIBAYAR';
     }
@@ -204,6 +220,8 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
       return Colors.green.shade600;
     } else if (status == 'pending_verification') {
       return Colors.orange.shade600;
+    } else if (status == 'cancelled') {
+      return Colors.grey.shade600;
     } else {
       return AppColors.maroon;
     }
@@ -248,14 +266,25 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                       _applyFilterAndSearch();
                     });
                   },
-                  style: const TextStyle(color: AppColors.maroon, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: AppColors.maroon,
+                    fontWeight: FontWeight.bold,
+                  ),
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search, color: AppColors.maroon),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: AppColors.maroon,
+                    ),
                     hintText: 'Cari penyewa atau kendaraan...',
-                    hintStyle: TextStyle(color: AppColors.maroon.withValues(alpha: 0.5)),
+                    hintStyle: TextStyle(
+                      color: AppColors.maroon.withValues(alpha: 0.5),
+                    ),
                     filled: true,
                     fillColor: AppColors.maroon.withValues(alpha: 0.05),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 0,
+                      horizontal: 20,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide.none,
@@ -278,23 +307,31 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
               ],
             ),
           ),
-          
+
           // Content Section
           Expanded(
             child: RefreshIndicator(
               onRefresh: _fetchRentals,
               color: AppColors.maroon,
               child: _isLoading && _filteredRentals.isEmpty
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.maroon))
+                  ? const Center(
+                      child: CircularProgressIndicator(color: AppColors.maroon),
+                    )
                   : _filteredRentals.isEmpty
                   ? ListView(
                       children: [
-                        SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.2,
+                        ),
                         const Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey),
+                              Icon(
+                                Icons.receipt_long_outlined,
+                                size: 64,
+                                color: Colors.grey,
+                              ),
                               SizedBox(height: 16),
                               Text(
                                 'Tidak ada data pembayaran.',
@@ -310,12 +347,17 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                       ],
                     )
                   : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 8,
+                      ),
                       itemCount: _filteredRentals.length,
                       itemBuilder: (context, index) {
                         final rental = _filteredRentals[index];
-                        final statusColor = _getStatusColor(rental.rentalStatus);
-                        
+                        final statusColor = _getStatusColor(
+                          rental.rentalStatus,
+                        );
+
                         return Container(
                           margin: const EdgeInsets.only(bottom: 20),
                           decoration: BoxDecoration(
@@ -346,26 +388,44 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                                       width: 70,
                                       height: 70,
                                       decoration: BoxDecoration(
-                                        color: AppColors.maroon.withValues(alpha: 0.05),
+                                        color: AppColors.maroon.withValues(
+                                          alpha: 0.05,
+                                        ),
                                         borderRadius: BorderRadius.circular(16),
                                       ),
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(16),
-                                        child: rental.imageUrl != null && rental.imageUrl!.isNotEmpty
-                                            ? Image.network(rental.imageUrl!, fit: BoxFit.cover)
-                                            : const Icon(Icons.directions_car, color: AppColors.maroon, size: 30),
+                                        child:
+                                            rental.imageUrl != null &&
+                                                rental.imageUrl!.isNotEmpty
+                                            ? Image.network(
+                                                rental.imageUrl!,
+                                                fit: BoxFit.cover,
+                                              )
+                                            : const Icon(
+                                                Icons.directions_car,
+                                                color: AppColors.maroon,
+                                                size: 30,
+                                              ),
                                       ),
                                     ),
                                     const SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 6,
+                                            ),
                                             decoration: BoxDecoration(
-                                              color: statusColor.withValues(alpha: 0.1),
-                                              borderRadius: BorderRadius.circular(12),
+                                              color: statusColor.withValues(
+                                                alpha: 0.1,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                             ),
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
@@ -380,7 +440,9 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                                                 ),
                                                 const SizedBox(width: 6),
                                                 Text(
-                                                  _getStatusText(rental.rentalStatus),
+                                                  _getStatusText(
+                                                    rental.rentalStatus,
+                                                  ),
                                                   style: TextStyle(
                                                     color: statusColor,
                                                     fontSize: 10,
@@ -404,18 +466,25 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                                           const SizedBox(height: 4),
                                           Row(
                                             children: [
-                                              Icon(Icons.person, size: 14, color: AppColors.maroon.withValues(alpha: 0.5)),
+                                              Icon(
+                                                Icons.person,
+                                                size: 14,
+                                                color: AppColors.maroon
+                                                    .withValues(alpha: 0.5),
+                                              ),
                                               const SizedBox(width: 4),
                                               Expanded(
                                                 child: Text(
                                                   rental.fullName ?? 'Anonim',
                                                   style: TextStyle(
-                                                    color: AppColors.maroon.withValues(alpha: 0.7),
+                                                    color: AppColors.maroon
+                                                        .withValues(alpha: 0.7),
                                                     fontWeight: FontWeight.w600,
                                                     fontSize: 13,
                                                   ),
                                                   maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
                                               ),
                                             ],
@@ -428,24 +497,33 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                               ),
                               // Bottom Section (Price & Verification)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 16,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.maroon.withValues(alpha: 0.04),
+                                  color: AppColors.maroon.withValues(
+                                    alpha: 0.04,
+                                  ),
                                   borderRadius: const BorderRadius.only(
                                     bottomLeft: Radius.circular(22),
                                     bottomRight: Radius.circular(22),
                                   ),
                                 ),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'Tagihan (${rental.totalDays} Hari)',
                                           style: TextStyle(
-                                            color: AppColors.maroon.withValues(alpha: 0.5),
+                                            color: AppColors.maroon.withValues(
+                                              alpha: 0.5,
+                                            ),
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -464,18 +542,26 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                                     // Dropdown Verification
                                     Container(
                                       height: 36,
-                                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: AppColors.maroon,
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: DropdownButtonHideUnderline(
                                         child: DropdownButton<String>(
-                                          value: (rental.paymentMethod == 'cash' || rental.paymentMethod == 'transfer')
+                                          value:
+                                              (rental.paymentMethod == 'cash' ||
+                                                  rental.paymentMethod ==
+                                                      'transfer')
                                               ? rental.paymentMethod
                                               : null,
                                           dropdownColor: AppColors.maroon,
-                                          icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                                          icon: const Icon(
+                                            Icons.arrow_drop_down,
+                                            color: Colors.white,
+                                          ),
                                           hint: const Text(
                                             'VERIFIKASI',
                                             style: TextStyle(
@@ -487,11 +573,25 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
                                           items: const [
                                             DropdownMenuItem(
                                               value: 'cash',
-                                              child: Text('CASH', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                              child: Text(
+                                                'CASH',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
                                             ),
                                             DropdownMenuItem(
                                               value: 'transfer',
-                                              child: Text('TRANSFER', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                              child: Text(
+                                                'TRANSFER',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
                                             ),
                                           ],
                                           onChanged: (value) {
@@ -533,7 +633,9 @@ class _AdminPaymentScreenState extends State<AdminPaymentScreen> {
           color: isSelected ? AppColors.maroon : AppColors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppColors.maroon : AppColors.maroon.withValues(alpha: 0.2),
+            color: isSelected
+                ? AppColors.maroon
+                : AppColors.maroon.withValues(alpha: 0.2),
           ),
         ),
         child: Text(

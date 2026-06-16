@@ -8,6 +8,7 @@ class RentEaseTextField extends StatelessWidget {
   final bool obscureText;
   final TextInputType keyboardType;
   final Color color;
+  final Widget? suffixIcon;
 
   const RentEaseTextField({
     super.key,
@@ -17,6 +18,7 @@ class RentEaseTextField extends StatelessWidget {
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
     this.color = AppColors.maroon,
+    this.suffixIcon,
   });
 
   @override
@@ -28,6 +30,7 @@ class RentEaseTextField extends StatelessWidget {
       style: TextStyle(color: color, fontWeight: FontWeight.bold),
       decoration: InputDecoration(
         prefixIcon: icon == null ? null : Icon(icon, color: color),
+        suffixIcon: suffixIcon,
         hintText: hintText,
         hintStyle: TextStyle(color: color, fontWeight: FontWeight.bold),
         contentPadding: const EdgeInsets.symmetric(

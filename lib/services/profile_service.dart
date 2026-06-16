@@ -22,7 +22,7 @@ class ProfileService {
         'phone_number': '',
         'role': 'user',
       };
-      
+
       try {
         await supabase.from('profiles').upsert(defaultProfile);
       } catch (_) {
@@ -35,5 +35,45 @@ class ProfileService {
       ...response,
       'email': response['email'] ?? authUser.email ?? '',
     });
+  }
+
+  Future<void> updateProfile({
+    String? fullName,
+    String? phoneNumber,
+    String? avatarUrl,
+  }) async {
+    final authUser = supabase.auth.currentUser;
+    if (authUser == null) {
+      throw Exception('User belum login');
+    }
+
+    final updates = <String, dynamic>{};
+    if (fullName != null) updates['full_name'] = fullName;
+    if (phoneNumber != null) updates['phone_number'] = phoneNumber;
+    if (avatarUrl != null) updates['avatar_url'] = avatarUrl.isEmpty ? null : avatarUrl;
+
+    if (updates.isNotEmpty) {
+      await supabase.from('profiles').update(updates).eq('id', authUser.id);
+    }
+  }
+
+  Future<String> uploadAvatar(dynamic file, String extension) async {
+    final authUser = supabase.auth.currentUser;
+    if (authUser == null) {
+      throw Exception('User belum login');
+    }
+
+    final fileName = '${authUser.id}_${DateTime.now().millisecondsSinceEpoch}.$extension';
+    final filePath = 'public/$fileName';
+
+    // Upload to 'avatars' bucket
+    await supabase.storage.from('avatars').upload(
+      filePath,
+      file,
+    );
+
+    // Get public URL
+    final imageUrl = supabase.storage.from('avatars').getPublicUrl(filePath);
+    return imageUrl;
   }
 }

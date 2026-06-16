@@ -13,7 +13,8 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProviderStateMixin {
+class _DashboardScreenState extends State<DashboardScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
 
@@ -24,7 +25,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-    _fadeAnimation = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
+    _fadeAnimation = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeOut,
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<DashboardProvider>().loadDashboardSummary().then((_) {
@@ -79,7 +83,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             icon: const Icon(Icons.refresh, color: AppColors.maroon),
             onPressed: () {
               _animController.reset();
-              context.read<DashboardProvider>().loadDashboardSummary().then((_) {
+              context.read<DashboardProvider>().loadDashboardSummary().then((
+                _,
+              ) {
                 _animController.forward();
               });
             },
@@ -87,19 +93,26 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         ],
       ),
       body: dashboardProvider.isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.maroon))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.maroon),
+            )
           : FadeTransition(
               opacity: _fadeAnimation,
               child: RefreshIndicator(
                 color: AppColors.maroon,
                 backgroundColor: Colors.white,
                 onRefresh: () async {
-                  await context.read<DashboardProvider>().loadDashboardSummary();
+                  await context
+                      .read<DashboardProvider>()
+                      .loadDashboardSummary();
                   _animController.forward(from: 0);
                 },
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -113,7 +126,8 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                           Expanded(
                             child: _buildGlassCard(
                               title: 'TOTAL SEWA',
-                              value: summary?.completedRentals.toString() ?? '0',
+                              value:
+                                  summary?.completedRentals.toString() ?? '0',
                               icon: Icons.assignment_turned_in,
                               color: AppColors.maroon,
                             ),
@@ -150,14 +164,20 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                           GestureDetector(
                             onTap: widget.onNavigateToHistory,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.maroon.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: const Text(
                                 'Lihat Semua',
-                                style: TextStyle(color: AppColors.maroon, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  color: AppColors.maroon,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
@@ -172,23 +192,28 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                             padding: const EdgeInsets.all(32.0),
                             child: Text(
                               'Belum ada transaksi.',
-                              style: TextStyle(color: AppColors.maroon.withValues(alpha: 0.5)),
+                              style: TextStyle(
+                                color: AppColors.maroon.withValues(alpha: 0.5),
+                              ),
                             ),
                           ),
                         )
                       else
-                        ...dashboardProvider.recentTransactions.take(4).map((trx) {
+                        ...dashboardProvider.recentTransactions.take(4).map((
+                          trx,
+                        ) {
                           final vehicle = trx['vehicle'] ?? {};
                           final profile = trx['profiles'] ?? {};
                           return _buildRecentItem(
-                            title: '${vehicle['brand'] ?? ''} ${vehicle['vehicle_name'] ?? ''}',
+                            title:
+                                '${vehicle['brand'] ?? ''} ${vehicle['vehicle_name'] ?? ''}',
                             plate: vehicle['plate_number'] ?? '',
                             name: profile['full_name'] ?? 'Anonim',
                             status: trx['status'] ?? 'Unknown',
                             date: trx['start_date'] ?? '',
                           );
                         }),
-                      
+
                       const SizedBox(height: 80), // Padding for bottom nav
                     ],
                   ),
@@ -207,10 +232,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppColors.maroon,
-            AppColors.maroon.withValues(alpha: 0.8),
-          ],
+          colors: [AppColors.maroon, AppColors.maroon.withValues(alpha: 0.8)],
         ),
         boxShadow: [
           BoxShadow(
@@ -229,7 +251,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             right: 0,
             height: 100,
             child: ClipRRect(
-              borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
+              ),
               child: CustomPaint(
                 painter: _CurvedChartPainter(color: Colors.white),
               ),
@@ -242,7 +267,11 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               children: [
                 Row(
                   children: [
-                    Icon(Icons.account_balance_wallet, color: Colors.white.withValues(alpha: 0.9), size: 20),
+                    Icon(
+                      Icons.account_balance_wallet,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'TOTAL PENDAPATAN',
@@ -269,21 +298,41 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.arrow_upward, color: AppColors.maroon, size: 12),
+                          Icon(
+                            Icons.arrow_upward,
+                            color: AppColors.maroon,
+                            size: 12,
+                          ),
                           SizedBox(width: 4),
-                          Text('+12.5%', style: TextStyle(color: AppColors.maroon, fontSize: 10, fontWeight: FontWeight.bold)),
+                          Text(
+                            '+12.5%',
+                            style: TextStyle(
+                              color: AppColors.maroon,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text('Bulan ini', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 10)),
+                    Text(
+                      'Bulan ini',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 10,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -294,7 +343,12 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     );
   }
 
-  Widget _buildGlassCard({required String title, required String value, required IconData icon, required Color color}) {
+  Widget _buildGlassCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -361,13 +415,29 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildMiniStat('User', summary?.totalUsers.toString() ?? '0', Icons.people),
+          _buildMiniStat(
+            'User',
+            summary?.totalUsers.toString() ?? '0',
+            Icons.people,
+          ),
           _buildDivider(),
-          _buildMiniStat('Armada', summary?.totalVehicles.toString() ?? '0', Icons.two_wheeler),
+          _buildMiniStat(
+            'Armada',
+            summary?.totalVehicles.toString() ?? '0',
+            Icons.two_wheeler,
+          ),
           _buildDivider(),
-          _buildMiniStat('Tersedia', summary?.availableVehicles.toString() ?? '0', Icons.check_circle_outline),
+          _buildMiniStat(
+            'Tersedia',
+            summary?.availableVehicles.toString() ?? '0',
+            Icons.check_circle_outline,
+          ),
           _buildDivider(),
-          _buildMiniStat('Disewa', summary?.rentedVehicles.toString() ?? '0', Icons.key),
+          _buildMiniStat(
+            'Disewa',
+            summary?.rentedVehicles.toString() ?? '0',
+            Icons.key,
+          ),
         ],
       ),
     );
@@ -380,12 +450,19 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(color: AppColors.maroon, fontSize: 18, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: AppColors.maroon,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(color: AppColors.maroon.withValues(alpha: 0.7), fontSize: 10),
+          style: TextStyle(
+            color: AppColors.maroon.withValues(alpha: 0.7),
+            fontSize: 10,
+          ),
         ),
       ],
     );
@@ -531,14 +608,20 @@ class _CurvedChartPainter extends CustomPainter {
     final path = Path();
     path.moveTo(0, size.height * 0.8);
     path.cubicTo(
-      size.width * 0.2, size.height * 0.9,
-      size.width * 0.4, size.height * 0.4,
-      size.width * 0.6, size.height * 0.6,
+      size.width * 0.2,
+      size.height * 0.9,
+      size.width * 0.4,
+      size.height * 0.4,
+      size.width * 0.6,
+      size.height * 0.6,
     );
     path.cubicTo(
-      size.width * 0.8, size.height * 0.8,
-      size.width * 1.0, size.height * 0.2,
-      size.width, size.height * 0.2,
+      size.width * 0.8,
+      size.height * 0.8,
+      size.width * 1.0,
+      size.height * 0.2,
+      size.width,
+      size.height * 0.2,
     );
 
     // Draw the gradient fill under the line
@@ -551,10 +634,7 @@ class _CurvedChartPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [
-          color.withValues(alpha: 0.3),
-          color.withValues(alpha: 0.0),
-        ],
+        colors: [color.withValues(alpha: 0.3), color.withValues(alpha: 0.0)],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
     canvas.drawPath(fillPath, fillPaint);

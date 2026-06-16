@@ -5,13 +5,13 @@ import 'package:rentease/screens/auth/login_screen.dart';
 import 'package:rentease/screens/admin/admin_main_screen.dart';
 import 'package:rentease/screens/user/user_main_screen.dart';
 import 'package:rentease/providers/rental_provider.dart';
-import 'package:rentease/providers/location_provider.dart';
+
 import 'package:rentease/providers/payment_provider.dart';
 import 'package:rentease/providers/dashboard_provider.dart';
 import 'package:rentease/providers/vehicle_provider.dart';
 import 'package:rentease/providers/profile_provider.dart';
 import 'package:rentease/providers/auth_provider.dart';
-
+import 'package:rentease/providers/favorite_provider.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -33,15 +33,17 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => VehicleProvider()),
         ChangeNotifierProvider(create: (_) => RentalProvider()),
-        ChangeNotifierProvider(create: (_) => LocationProvider()),
         ChangeNotifierProvider(create: (_) => PaymentProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => FavoriteProvider()..loadFavorites()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: supabase.auth.currentUser == null ? const LoginScreen() : const AuthWrapper(),
+        home: supabase.auth.currentUser == null
+            ? const LoginScreen()
+            : const AuthWrapper(),
       ),
     );
   }
@@ -65,9 +67,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
     try {
       final profileProvider = context.read<ProfileProvider>();
       await profileProvider.loadProfile();
-      
+
       if (!mounted) return;
-      
+
       if (profileProvider.profile?.role == 'admin') {
         Navigator.pushReplacement(
           context,
@@ -92,10 +94,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }

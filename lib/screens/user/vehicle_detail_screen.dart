@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:rentease/models/vehicle_model.dart';
 import 'package:rentease/utils/app_colors.dart';
 import 'package:rentease/utils/formatters.dart';
+import 'package:provider/provider.dart';
+import 'package:rentease/providers/favorite_provider.dart';
 import 'package:rentease/screens/user/rental_checkout_screen.dart';
 
 class VehicleDetailScreen extends StatelessWidget {
@@ -28,18 +30,22 @@ class VehicleDetailScreen extends StatelessWidget {
                 ? Container(
                     color: AppColors.maroon.withValues(alpha: 0.1),
                     child: const Center(
-                      child: Icon(Icons.directions_car, size: 100, color: AppColors.maroon),
+                      child: Icon(
+                        Icons.directions_car,
+                        size: 100,
+                        color: AppColors.maroon,
+                      ),
                     ),
                   )
-                : Image.network(
-                    vehicle.imageUrl!,
-                    fit: BoxFit.cover,
-                  ),
+                : Image.network(vehicle.imageUrl!, fit: BoxFit.cover),
           ),
-          
+
           // Gradient Overlay at top for back button
           Positioned(
-            top: 0, left: 0, right: 0, height: 120,
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 120,
             child: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
@@ -63,12 +69,21 @@ class VehicleDetailScreen extends StatelessWidget {
                   icon: Icons.arrow_back_ios_new,
                   onTap: () => Navigator.pop(context),
                 ),
-                _buildCircularButton(
-                  icon: Icons.favorite_border,
-                  onTap: () {
-                    // TODO: Implement Favorite
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Disimpan ke Favorit')),
+                Consumer<FavoriteProvider>(
+                  builder: (context, favoriteProvider, child) {
+                    final isFav = favoriteProvider.isFavorite(vehicle.id);
+                    return _buildCircularButton(
+                      icon: isFav ? Icons.favorite : Icons.favorite_border,
+                      iconColor: isFav ? Colors.red : Colors.white,
+                      onTap: () {
+                        favoriteProvider.toggleFavorite(vehicle.id);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(isFav ? 'Dihapus dari Favorit' : 'Disimpan ke Favorit'),
+                            duration: const Duration(seconds: 1),
+                          ),
+                        );
+                      },
                     );
                   },
                 ),
@@ -94,7 +109,7 @@ class VehicleDetailScreen extends StatelessWidget {
                     color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 20,
                     offset: const Offset(0, -5),
-                  )
+                  ),
                 ],
               ),
               child: ClipRRect(
@@ -106,7 +121,12 @@ class VehicleDetailScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(24, 32, 24, 100), // padding bottom for floating button
+                        padding: const EdgeInsets.fromLTRB(
+                          24,
+                          32,
+                          24,
+                          100,
+                        ), // padding bottom for floating button
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -116,12 +136,15 @@ class VehicleDetailScreen extends StatelessWidget {
                               children: [
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         vehicle.brand.toUpperCase(),
                                         style: TextStyle(
-                                          color: AppColors.maroon.withValues(alpha: 0.6),
+                                          color: AppColors.maroon.withValues(
+                                            alpha: 0.6,
+                                          ),
                                           fontSize: 14,
                                           fontWeight: FontWeight.bold,
                                           letterSpacing: 1.5,
@@ -137,26 +160,20 @@ class VehicleDetailScreen extends StatelessWidget {
                                           height: 1.1,
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.maroon.withValues(alpha: 0.05),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.star, color: Color(0xFFD7B448), size: 20),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '4.9',
-                                        style: TextStyle(
-                                          color: AppColors.maroon.withValues(alpha: 0.8),
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.star, color: Colors.amber, size: 20),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            vehicle.rating > 0 ? vehicle.rating.toStringAsFixed(1) : 'Baru',
+                                            style: const TextStyle(
+                                              color: AppColors.maroon,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
@@ -202,26 +219,23 @@ class VehicleDetailScreen extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 _SpecItem(
-                                  icon: vehicle.vehicleType.toLowerCase() == 'motor' 
-                                      ? Icons.two_wheeler 
+                                  icon:
+                                      vehicle.vehicleType.toLowerCase() ==
+                                          'motor'
+                                      ? Icons.two_wheeler
                                       : Icons.directions_car,
                                   title: 'Tipe',
                                   value: vehicle.vehicleType.toUpperCase(),
                                 ),
                                 _SpecItem(
-                                  icon: Icons.pin_outlined,
-                                  title: 'Plat',
-                                  value: vehicle.plateNumber,
-                                ),
-                                _SpecItem(
-                                  icon: Icons.speed,
+                                  icon: Icons.settings,
                                   title: 'Transmisi',
-                                  value: 'Auto', // Placeholder as not in model
+                                  value: vehicle.transmission,
                                 ),
                                 _SpecItem(
                                   icon: Icons.airline_seat_recline_normal,
                                   title: 'Kursi',
-                                  value: vehicle.vehicleType.toLowerCase() == 'motor' ? '2' : '4-6',
+                                  value: '${vehicle.capacity} Orang',
                                 ),
                               ],
                             ),
@@ -241,7 +255,12 @@ class VehicleDetailScreen extends StatelessWidget {
             right: 0,
             bottom: 0,
             child: Container(
-              padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.of(context).padding.bottom + 20),
+              padding: EdgeInsets.fromLTRB(
+                24,
+                20,
+                24,
+                MediaQuery.of(context).padding.bottom + 20,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.white,
                 boxShadow: [
@@ -294,12 +313,15 @@ class VehicleDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 16),
                   ElevatedButton(
-                    onPressed: vehicle.status.toLowerCase() == 'available' || vehicle.status.toLowerCase() == 'tersedia'
+                    onPressed:
+                        vehicle.status.toLowerCase() == 'available' ||
+                            vehicle.status.toLowerCase() == 'tersedia'
                         ? () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const RentalCheckoutScreen(),
+                                builder: (context) =>
+                                    const RentalCheckoutScreen(),
                                 settings: RouteSettings(arguments: vehicle),
                               ),
                             );
@@ -309,7 +331,10 @@ class VehicleDetailScreen extends StatelessWidget {
                       backgroundColor: AppColors.maroon,
                       disabledBackgroundColor: Colors.grey.shade400,
                       foregroundColor: AppColors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -333,7 +358,11 @@ class VehicleDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCircularButton({required IconData icon, required VoidCallback onTap}) {
+  Widget _buildCircularButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    Color iconColor = Colors.white,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -342,7 +371,7 @@ class VehicleDetailScreen extends StatelessWidget {
           color: Colors.white.withValues(alpha: 0.2),
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, color: Colors.white, size: 20),
+        child: Icon(icon, color: iconColor, size: 20),
       ),
     );
   }
@@ -353,7 +382,11 @@ class _SpecItem extends StatelessWidget {
   final String title;
   final String value;
 
-  const _SpecItem({required this.icon, required this.title, required this.value});
+  const _SpecItem({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {

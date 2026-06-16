@@ -16,7 +16,11 @@ class PaymentService {
   }
 
   Future<List<PaymentModel>> getPayments() async {
-    final response = await http.get(Uri.parse('$baseUrl/payments'), headers: _headers);
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final response = await http.get(
+      Uri.parse('$baseUrl/rentals?t=$timestamp'),
+      headers: _headers,
+    );
     _checkResponse(response);
 
     final decoded = jsonDecode(response.body);
@@ -28,7 +32,11 @@ class PaymentService {
   }
 
   Future<List<dynamic>> getRawPayments() async {
-    final response = await http.get(Uri.parse('$baseUrl/payments'), headers: _headers);
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final response = await http.get(
+      Uri.parse('$baseUrl/rentals?t=$timestamp'),
+      headers: _headers,
+    );
     _checkResponse(response);
     final decoded = jsonDecode(response.body);
     return decoded['data'] ?? [];
@@ -42,10 +50,11 @@ class PaymentService {
     _checkResponse(response);
   }
 
-  Future<void> verifyPayment(String id) async {
+  Future<void> verifyPayment(String id, String paymentMethod) async {
     final response = await http.patch(
       Uri.parse('$baseUrl/payments/verify/$id'),
       headers: _headers,
+      body: jsonEncode({'payment_method': paymentMethod}),
     );
     _checkResponse(response);
   }

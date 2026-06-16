@@ -27,7 +27,7 @@ class RentalProvider extends ChangeNotifier {
   Future<void> addRental(RentalModel rental) async {
     try {
       await _rentalService.addRental(rental);
-      await loadRentals();
+      // loadRentals() is strictly for admin usage
     } catch (e) {
       debugPrint('Error adding rental: $e');
       rethrow;
@@ -72,7 +72,7 @@ class RentalProvider extends ChangeNotifier {
   Future<void> cancelRental(String rentalId) async {
     try {
       await _rentalService.cancelRental(rentalId);
-      await loadRentals();
+      // loadRentals() is strictly for admin usage
     } catch (e) {
       debugPrint('Error canceling rental: $e');
       rethrow;

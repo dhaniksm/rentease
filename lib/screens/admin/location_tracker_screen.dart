@@ -1,7 +1,11 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rentease/utils/app_colors.dart';
 import 'package:rentease/providers/rental_provider.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:rentease/services/location_api_service.dart';
 
 class LocationTrackerScreen extends StatefulWidget {
   const LocationTrackerScreen({super.key});
@@ -14,6 +18,14 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
   int _selectedIndex = 0; // selected marker index
   List<dynamic> _activeRentals = [];
   bool _isLoading = true;
+
+  final MapController _mapController = MapController();
+
+  // Center of Jakarta as default
+  final LatLng _defaultCenter = const LatLng(-6.2088, 106.8456);
+
+  // We'll store pseudo-random coordinates for each active rental
+  final Map<String, LatLng> _rentalCoordinates = {};
 
   @override
   void initState() {
@@ -30,30 +42,56 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
       final rentalProvider = context.read<RentalProvider>();
       await rentalProvider.loadRentals(); // load all rentals for admin
 
+      final rentals = rentalProvider.rawRentals.where((rental) {
+        final status = rental['status'] ?? rental['rental_status'];
+        return status == 'active' || status == 'paid';
+      }).toList();
+
+      // Fetch real coordinates from backend
+      for (var rental in rentals) {
+        final id = rental['id'].toString();
+        try {
+          final location = await LocationApiService().getLatestLocation(id);
+          if (location != null) {
+            _rentalCoordinates[id] = location;
+          }
+        } catch (e) {
+          debugPrint('Error fetching location for $id: $e');
+        }
+      }
+
       setState(() {
-        _activeRentals = rentalProvider.rawRentals.where((rental) {
-          return rental['status'] == 'active' || rental['status'] == 'paid';
-        }).toList();
+        _activeRentals = rentals;
       });
+
+      // If there are rentals, move map to the first one after a short delay
+      if (_activeRentals.isNotEmpty) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          _moveToSelectedMarker();
+        });
+      }
     } catch (e) {
       debugPrint('Error: $e');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
-  // Predefined offsets for the fake map
-  final List<Offset> _markerOffsets = const [
-    Offset(60, 80),
-    Offset(150, 200),
-    Offset(250, 120),
-    Offset(100, 280),
-    Offset(200, 350),
-    Offset(40, 180),
-    Offset(280, 50),
-  ];
+  void _moveToSelectedMarker() {
+    if (_activeRentals.isEmpty || _selectedIndex >= _activeRentals.length)
+      return;
+
+    final id = _activeRentals[_selectedIndex]['id'].toString();
+    final location = _rentalCoordinates[id];
+
+    if (location != null) {
+      _mapController.move(location, 14.0); // Zoom level 14
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +118,9 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.maroon))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.maroon),
+            )
           : Column(
               children: [
                 // Search Bar
@@ -94,7 +134,10 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.maroon.withValues(alpha: 0.2), width: 1),
+                      border: Border.all(
+                        color: AppColors.maroon.withValues(alpha: 0.2),
+                        width: 1,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: AppColors.maroon.withValues(alpha: 0.05),
@@ -127,15 +170,32 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
                     child: Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        image: const DecorationImage(
-                          image: AssetImage('assets/images/dark_map.png'),
-                          fit: BoxFit.cover,
+                        border: Border.all(
+                          color: AppColors.maroon.withValues(alpha: 0.5),
+                          width: 2,
                         ),
-                        border: Border.all(color: AppColors.maroon.withValues(alpha: 0.5), width: 2),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Stack(
-                        children: _buildMapMarkers(),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: FlutterMap(
+                          mapController: _mapController,
+                          options: MapOptions(
+                            initialCenter: _defaultCenter,
+                            initialZoom: 12.0,
+                            interactionOptions: const InteractionOptions(
+                              flags: InteractiveFlag.all,
+                            ),
+                          ),
+                          children: [
+                            TileLayer(
+                              urlTemplate:
+                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              userAgentPackageName: 'com.example.rentease',
+                            ),
+                            MarkerLayer(markers: _buildMapMarkers()),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -150,6 +210,17 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.maroon.withValues(alpha: 0.2),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.maroon.withValues(alpha: 0.1),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
                       ),
                       child: _buildSelectedDetailCard(),
                     ),
@@ -167,30 +238,36 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
     );
   }
 
-  List<Widget> _buildMapMarkers() {
-    List<Widget> markers = [];
+  List<Marker> _buildMapMarkers() {
+    List<Marker> markers = [];
     for (int i = 0; i < _activeRentals.length; i++) {
-      if (i >= _markerOffsets.length) break; // Limit to predefined offsets
-
       final isSelected = _selectedIndex == i;
-      final offset = _markerOffsets[i];
-      
-      final vehicle = _activeRentals[i]['vehicle'] ?? {};
+      final item = _activeRentals[i];
+      final id = item['id'].toString();
+
+      final location = _rentalCoordinates[id] ?? _defaultCenter;
+
+      final vehicle = item['vehicle'] ?? {};
       final type = (vehicle['type'] ?? '').toString().toLowerCase();
-      final icon = type.contains('motor') ? Icons.motorcycle : Icons.directions_car;
+      final icon = type.contains('motor')
+          ? Icons.motorcycle
+          : Icons.directions_car;
       final color = type.contains('motor') ? Colors.blue : Colors.green;
 
       markers.add(
-        Positioned(
-          left: offset.dx,
-          top: offset.dy,
+        Marker(
+          point: location,
+          width: 50,
+          height: 50,
+          alignment: Alignment.topCenter,
           child: GestureDetector(
             onTap: () {
               setState(() {
                 _selectedIndex = i;
               });
+              _moveToSelectedMarker();
             },
-            child: _buildMarker(color, icon, isGlowing: isSelected),
+            child: _buildMarkerWidget(color, icon, isGlowing: isSelected),
           ),
         ),
       );
@@ -200,17 +277,20 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
 
   Widget _buildSelectedDetailCard() {
     if (_selectedIndex >= _activeRentals.length) return const SizedBox();
-    
+
     final item = _activeRentals[_selectedIndex];
     final vehicle = item['vehicle'] ?? {};
     final profile = item['profiles'] ?? {};
-    
-    final String vName = '${vehicle['brand'] ?? ''} ${vehicle['vehicle_name'] ?? ''}'.trim();
+
+    final String vName =
+        '${vehicle['brand'] ?? ''} ${vehicle['vehicle_name'] ?? ''}'.trim();
     final String plate = vehicle['plate_number'] ?? '-';
     final String pName = profile['full_name'] ?? 'Unknown User';
-    
+
     final String pickup = (item['start_date'] ?? '').split('T').first;
-    final String pengembalian = (item['expected_return_date'] ?? '').split('T').first;
+    final String pengembalian = (item['expected_return_date'] ?? '')
+        .split('T')
+        .first;
     final String totalDays = '${item['total_days'] ?? 1} hari';
 
     return Row(
@@ -219,8 +299,11 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
           width: 80,
           height: 100,
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.darkMaroon, width: 2),
+            border: Border.all(color: AppColors.maroon, width: 2),
             borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Center(
+            child: Icon(Icons.car_rental, color: AppColors.maroon, size: 40),
           ),
         ),
         const SizedBox(width: 12),
@@ -237,7 +320,7 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
                 ),
               ),
               Text(
-                'Terhubung GPS Tracker via Vercel',
+                'Terhubung GPS Tracker',
                 style: TextStyle(
                   color: AppColors.maroon.withValues(alpha: 0.7),
                   fontSize: 10,
@@ -288,7 +371,11 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
     );
   }
 
-  Widget _buildMarker(Color color, IconData icon, {bool isGlowing = false}) {
+  Widget _buildMarkerWidget(
+    Color color,
+    IconData icon, {
+    bool isGlowing = false,
+  }) {
     return Container(
       decoration: isGlowing
           ? BoxDecoration(
@@ -307,17 +394,19 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: color,
+              color: isGlowing ? AppColors.maroon : color,
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 1.5),
+              border: Border.all(color: Colors.white, width: 2),
             ),
-            child: Icon(icon, color: Colors.white, size: 16),
+            child: Icon(icon, color: Colors.white, size: 20),
           ),
           Icon(
             Icons.arrow_drop_down,
-            color: color,
+            color: isGlowing ? AppColors.maroon : color,
             size: 24,
-            shadows: [if (isGlowing) Shadow(color: color, blurRadius: 10)],
+            shadows: [
+              if (isGlowing) Shadow(color: AppColors.maroon, blurRadius: 10),
+            ],
           ),
         ],
       ),
