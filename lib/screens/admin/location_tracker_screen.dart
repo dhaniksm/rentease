@@ -6,6 +6,7 @@ import 'package:rentease/providers/rental_provider.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:rentease/services/location_api_service.dart';
+import 'package:geolocator/geolocator.dart';
 
 class LocationTrackerScreen extends StatefulWidget {
   const LocationTrackerScreen({super.key});
@@ -82,14 +83,55 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
   }
 
   void _moveToSelectedMarker() {
-    if (_activeRentals.isEmpty || _selectedIndex >= _activeRentals.length)
+    if (_activeRentals.isEmpty || _selectedIndex >= _activeRentals.length) {
       return;
-
-    final id = _activeRentals[_selectedIndex]['id'].toString();
+    }
+    final item = _activeRentals[_selectedIndex];
+    final id = item['id'].toString();
     final location = _rentalCoordinates[id];
-
     if (location != null) {
-      _mapController.move(location, 14.0); // Zoom level 14
+      _mapController.move(location, 15.0);
+    }
+  }
+
+  Future<void> _moveToAdminLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Layanan lokasi tidak aktif.')),
+        );
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Izin lokasi ditolak.')),
+          );
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Izin lokasi ditolak permanen.')),
+        );
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition();
+      _mapController.move(LatLng(position.latitude, position.longitude), 15.0);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal mendapatkan lokasi: $e')),
+      );
     }
   }
 
@@ -178,22 +220,36 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(14),
-                        child: FlutterMap(
-                          mapController: _mapController,
-                          options: MapOptions(
-                            initialCenter: _defaultCenter,
-                            initialZoom: 12.0,
-                            interactionOptions: const InteractionOptions(
-                              flags: InteractiveFlag.all,
-                            ),
-                          ),
+                        child: Stack(
                           children: [
-                            TileLayer(
-                              urlTemplate:
-                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                              userAgentPackageName: 'com.example.rentease',
+                            FlutterMap(
+                              mapController: _mapController,
+                              options: MapOptions(
+                                initialCenter: _defaultCenter,
+                                initialZoom: 12.0,
+                                interactionOptions: const InteractionOptions(
+                                  flags: InteractiveFlag.all,
+                                ),
+                              ),
+                              children: [
+                                TileLayer(
+                                  urlTemplate:
+                                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                  userAgentPackageName: 'com.example.rentease',
+                                ),
+                                MarkerLayer(markers: _buildMapMarkers()),
+                              ],
                             ),
-                            MarkerLayer(markers: _buildMapMarkers()),
+                            Positioned(
+                              bottom: 16,
+                              right: 16,
+                              child: FloatingActionButton(
+                                heroTag: 'admin_location_btn',
+                                backgroundColor: AppColors.maroon,
+                                onPressed: _moveToAdminLocation,
+                                child: const Icon(Icons.my_location, color: Colors.white),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -247,8 +303,7 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
 
       final location = _rentalCoordinates[id] ?? _defaultCenter;
 
-      final vehicle = item['vehicle'] ?? {};
-      final type = (vehicle['type'] ?? '').toString().toLowerCase();
+      final type = (item['vehicle_type'] ?? '').toString().toLowerCase();
       final icon = type.contains('motor')
           ? Icons.motorcycle
           : Icons.directions_car;
@@ -257,8 +312,8 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
       markers.add(
         Marker(
           point: location,
-          width: 50,
-          height: 50,
+          width: 80,
+          height: 80,
           alignment: Alignment.topCenter,
           child: GestureDetector(
             onTap: () {
@@ -279,13 +334,10 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
     if (_selectedIndex >= _activeRentals.length) return const SizedBox();
 
     final item = _activeRentals[_selectedIndex];
-    final vehicle = item['vehicle'] ?? {};
-    final profile = item['profiles'] ?? {};
-
     final String vName =
-        '${vehicle['brand'] ?? ''} ${vehicle['vehicle_name'] ?? ''}'.trim();
-    final String plate = vehicle['plate_number'] ?? '-';
-    final String pName = profile['full_name'] ?? 'Unknown User';
+        '${item['brand'] ?? ''} ${item['vehicle_name'] ?? item['nama_kendaraan'] ?? ''}'.trim();
+    final String plate = item['plate_number'] ?? item['plat_nomor'] ?? '-';
+    final String pName = item['full_name'] ?? item['nama_penyewa'] ?? 'Unknown User';
 
     final String pickup = (item['start_date'] ?? '').split('T').first;
     final String pengembalian = (item['expected_return_date'] ?? '')
@@ -312,12 +364,14 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '$vName - $plate'.toUpperCase(),
+                '${vName.isEmpty ? 'KENDARAAN' : vName.toUpperCase()} - $plate',
                 style: const TextStyle(
                   color: AppColors.maroon,
                   fontWeight: FontWeight.w900,
                   fontSize: 14,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               Text(
                 'Terhubung GPS Tracker',
@@ -335,6 +389,8 @@ class _LocationTrackerScreenState extends State<LocationTrackerScreen> {
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 4),
               _buildDetailRow('Waktu Sewa', totalDays),

@@ -188,17 +188,7 @@ class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
                       itemCount: historyData.length,
                       itemBuilder: (context, index) {
                         final item = historyData[index];
-                        final vehicle = item['vehicle'] ?? {};
-                        final profile = item['profiles'] ?? {};
-
-                        final String vName =
-                            '${vehicle['brand'] ?? ''} ${vehicle['vehicle_name'] ?? ''}'
-                                .trim();
-                        final String pName =
-                            profile['full_name'] ?? 'Unknown User';
-                        final String plate = vehicle['plate_number'] ?? '-';
-                        final imageUrl = vehicle['image_url'];
-
+                        final imageUrl = item['vehicle_image_url'] ?? item['image_url'];
                         final String startDate =
                             item['start_date'] ?? item['waktu_sewa'] ?? '';
                         final int totalDays =
@@ -211,7 +201,7 @@ class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
                         final totalPrice = rawPrice is double
                             ? rawPrice.toInt()
                             : (rawPrice is int ? rawPrice : 0);
-                        final String status = item['status'] ?? '-';
+                        final String status = item['status'] ?? item['rental_status'] ?? '-';
 
                         final statusColor = _getStatusColor(status);
 
@@ -309,7 +299,7 @@ class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
                                           ),
                                           const SizedBox(height: 12),
                                           Text(
-                                            '${vName.isEmpty ? 'KENDARAAN' : vName.toUpperCase()} - $plate',
+                                            '${(item['vehicle_name'] ?? item['nama_kendaraan'] ?? 'KENDARAAN').toString().toUpperCase()} - ${item['plate_number'] ?? item['plat_nomor'] ?? '-'}',
                                             style: const TextStyle(
                                               color: AppColors.maroon,
                                               fontWeight: FontWeight.w900,
@@ -330,7 +320,7 @@ class _RiwayatAdminScreenState extends State<RiwayatAdminScreen> {
                                               const SizedBox(width: 4),
                                               Expanded(
                                                 child: Text(
-                                                  pName,
+                                                  item['full_name'] ?? item['nama_penyewa'] ?? 'Unknown User',
                                                   style: TextStyle(
                                                     color: AppColors.maroon
                                                         .withValues(alpha: 0.7),

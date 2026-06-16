@@ -202,14 +202,12 @@ class _DashboardScreenState extends State<DashboardScreen>
                         ...dashboardProvider.recentTransactions.take(4).map((
                           trx,
                         ) {
-                          final vehicle = trx['vehicle'] ?? {};
-                          final profile = trx['profiles'] ?? {};
                           return _buildRecentItem(
                             title:
-                                '${vehicle['brand'] ?? ''} ${vehicle['vehicle_name'] ?? ''}',
-                            plate: vehicle['plate_number'] ?? '',
-                            name: profile['full_name'] ?? 'Anonim',
-                            status: trx['status'] ?? 'Unknown',
+                                '${trx['brand'] ?? ''} ${trx['vehicle_name'] ?? trx['nama_kendaraan'] ?? 'KENDARAAN'}'.trim(),
+                            plate: trx['plate_number'] ?? trx['plat_nomor'] ?? '',
+                            name: trx['full_name'] ?? trx['nama_penyewa'] ?? 'Anonim',
+                            status: trx['status'] ?? trx['rental_status'] ?? 'Unknown',
                             date: trx['start_date'] ?? '',
                           );
                         }),
